@@ -1,0 +1,193 @@
+.navbar {
+  background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-6));
+  height: 100vh;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+}
+
+.burger {
+  display: none; /* Oculta em desktop por padrão */
+  /* Centraliza o hambúrguer verticalmente */
+  align-self: center;
+}
+
+.wrapper {
+  display: flex;
+  flex: 1;
+}
+
+.aside {
+  flex: 0 0 60px;
+  background-color: var(--mantine-color-body);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
+}
+
+.main {
+  flex: 1;
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+}
+
+.mainLink {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--mantine-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+
+  &:hover {
+    background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5));
+  }
+
+  &[data-active] {
+    &,
+    &:hover {
+      background-color: var(--mantine-color-blue-light);
+      color: var(--mantine-color-blue-light-color);
+    }
+  }
+}
+
+.title {
+  font-family: Outfit, var(--mantine-font-family);
+  margin-bottom: var(--mantine-spacing-xl);
+  background-color: var(--mantine-color-body);
+  padding: var(--mantine-spacing-md);
+  font-weight: 500;
+  padding-top: 18px;
+  height: 60px;
+  border-bottom: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
+}
+
+.logo {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  height: 60px;
+  padding-top: var(--mantine-spacing-md);
+  border-bottom: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
+  margin-bottom: var(--mantine-spacing-xl);
+}
+
+.link {
+  display: block;
+  text-decoration: none;
+  border-top-right-radius: var(--mantine-radius-md);
+  border-bottom-right-radius: var(--mantine-radius-md);
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+  padding: 0 var(--mantine-spacing-md);
+  font-size: var(--mantine-font-size-sm);
+  margin-right: var(--mantine-spacing-md);
+  font-weight: 500;
+  height: 44px;
+  line-height: 44px;
+
+  &:hover {
+    background-color: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
+    color: light-dark(var(--mantine-color-dark), var(--mantine-color-light));
+  }
+
+  &[data-active] {
+    &,
+    &:hover {
+      border-left-color: var(--mantine-color-blue-filled);
+      background-color: var(--mantine-color-blue-filled);
+      color: var(--mantine-color-white);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    /* Transforma a barra lateral em uma barra superior fixa */
+    width: 100%;
+    height: auto; /* Deixa de ter 100vh */
+    border-right: none;
+    border-bottom: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+    flex-direction: row;
+    position: fixed; /* Fixa a barra no topo */
+    top: 0;
+    left: 0;
+    z-index: 100; /* Garante que fique acima do conteúdo */
+  }
+
+  .wrapper {
+    /* Empilha o conteúdo (aside e main) */
+    flex-direction: column;
+    height: auto;
+    width: 100%;
+  }
+
+  /* --- ASIDE (Barra de Ícones/Topo) --- */
+
+  .aside {
+    width: 100%;
+    height: 60px; /* Altura fixa para a barra superior */
+    flex-direction: row; /* Ícones em linha */
+    justify-content: flex-start;
+    align-items: center;
+    border-right: none;
+    border-bottom: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
+    padding: 0 var(--mantine-spacing-md);
+  }
+
+  .logo {
+    /* Modifica a área do logo para incluir o Hambúrguer e os links principais */
+    width: auto;
+    height: 60px;
+    padding-top: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+    order: 1; /* Põe o logo (ou MantineLogo) à esquerda */
+    flex-grow: 1;
+    justify-content: flex-start;
+  }
+
+  /* Exibe o Hambúrguer no mobile */
+  .burger {
+    display: block;
+    order: 2; /* Põe o hambúrguer à direita, próximo aos ícones */
+    margin-left: auto;
+    /* Ajusta a cor se necessário */
+    color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+  }
+
+  /* Exibir os mainLinks ao lado do hambúrguer (ou escondê-los) */
+  /* Neste caso, vamos exibir os mainLinks abaixo do logo, em linha, no topo: */
+  .mainLink {
+    margin: 0 var(--mantine-spacing-xs);
+    order: 3; /* Põe os ícones à direita */
+  }
+
+  /* --- MAIN (Menu de Links de Conteúdo) --- */
+
+  .main {
+    /* Esconde o menu de links por padrão em mobile */
+    display: none;
+    width: 100%;
+    padding: var(--mantine-spacing-md);
+    padding-top: 0; /* Remove padding extra do título */
+  }
+
+  .main[data-opened] {
+    /* Exibe o menu quando o estado 'isMenuOpen' for verdadeiro */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Garante que o título do Menu (Dashboard, etc.) seja escondido no mobile
+     quando o menu se abre, para economizar espaço e evitar repetição. */
+  .title {
+    display: none;
+  }
+
+  /* Ajusta o padding do conteúdo principal da página para não ser coberto pela navbar */
+  /* Nota: Se o layout principal da sua aplicação for afetado, você precisará adicionar um padding-top
+     ao seu container de página principal para acomodar a altura fixa de 60px da navbar móvel. */
+}
