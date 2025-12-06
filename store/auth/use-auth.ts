@@ -25,6 +25,7 @@ export interface User {
   avatarUrl: string | null | undefined;
   planName: any;
   planSlug: any;
+  planMaxUsers: number;
   trialEndsAt: any;
   subscriptionEndsAt: any;
   id: string;

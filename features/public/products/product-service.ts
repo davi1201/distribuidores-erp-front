@@ -17,6 +17,7 @@ export interface StockItem {
   quantity: number;
   minStock: number;
   maxStock?: number;
+  warehouseId: string;
 }
 
 export interface Product {

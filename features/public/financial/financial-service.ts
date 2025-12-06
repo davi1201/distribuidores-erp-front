@@ -38,14 +38,15 @@ export interface RegisterPaymentPayload {
 export interface FinancialFilters {
   status?: string;
   customerId?: string;
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: string; // Alterado para string (ISO date)
+  endDate?: string;   // Alterado para string (ISO date)
 }
 
 // --- API CALLS ---
 
 export const getFinancialTitles = async (filters?: FinancialFilters): Promise<FinancialTitle[]> => {
-  // Converte filtros para query string se necessário
+  // O Axios serializa automaticamente o objeto params para query string:
+  // ?startDate=2023-01-01&endDate=2023-01-31&status=OPEN
   const { data } = await api.get('/financial/titles', { params: filters });
   return data;
 };

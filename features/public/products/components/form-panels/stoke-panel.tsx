@@ -5,7 +5,7 @@ import { IconInfoCircle, IconExchange, IconArrowRight } from '@tabler/icons-reac
 import { useDisclosure } from '@mantine/hooks';
 import Link from 'next/link';
 import { ProductKardex } from '@/features/public/stock/components/product-kardex';
-import { StockMovementModal } from '@/features/public/stock/components/stock-movement-modal';
+import { StockMovementModal } from '@/features/public/stock/components/modals/stock-movement-modal';
 
 interface StockPanelProps {
   form: UseFormReturnType<any>;

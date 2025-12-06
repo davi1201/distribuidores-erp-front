@@ -136,27 +136,27 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         </Flex>
         <SubscriptionWizardModal />
       </AppShell.Main>
-      {user?.isTrial === true &&
-        <AppShell.Footer
-          p="md"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: 'calc(100% - 300px)',
-            left: 300
-          }}
-        >
-          <Flex align="center" gap={10}>
-            <Text fw={500} size="sm" c="dimmed">
-              {user?.isTrialExpired ? 'Sua período de teste terminou em: ' : 'Seu período de teste termina em: '} {formatDateOnlyBR(user?.trialEndsAt ?? '')}
-            </Text>
-            <Button size='sm' variant='light' onClick={openSubscriptionWizard}>
-              Fazer Upgrade
-            </Button>
-          </Flex>
-        </AppShell.Footer>
-      }
+
+      <AppShell.Footer
+        p="md"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: 'calc(100% - 300px)',
+          left: 300
+        }}
+      >
+        <Flex align="center" gap={10}>
+          <Text fw={500} size="sm" c="dimmed">
+            {user?.isTrialExpired ? 'Sua período de teste terminou em: ' : 'Seu período de teste termina em: '} {formatDateOnlyBR(user?.trialEndsAt ?? '')}
+          </Text>
+          <Button size='sm' variant='light' onClick={openSubscriptionWizard}>
+            Fazer Upgrade
+          </Button>
+        </Flex>
+      </AppShell.Footer>
+
     </AppShell>
   );
 }

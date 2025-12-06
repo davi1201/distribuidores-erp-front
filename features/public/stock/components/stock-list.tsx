@@ -3,10 +3,12 @@
 import { useMemo, useState } from 'react';
 import {
   Group, Text, ActionIcon, Menu, Badge, Button,
-  TextInput, Flex, Avatar, Drawer, Tooltip
+  TextInput, Flex, Avatar, Drawer, Tooltip, Select, Paper
 } from '@mantine/core';
 import {
-  IconDots, IconSearch, IconHistory, IconArrowsExchange, IconBox, IconAlertTriangle
+  IconDots, IconSearch, IconHistory, IconArrowsExchange, IconBox,
+  IconAlertTriangle, IconVersions, IconBuildingWarehouse,
+  IconPlus
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,43 +17,46 @@ import { ColumnDef } from '@tanstack/react-table';
 
 import { DataGrid } from '@/components/ui/data-grid/data-grid';
 import { getProducts, Product } from '../../products/product-service';
+import { getWarehouses } from '../stock-service';
+import { StockMovementModal } from './modals/stock-movement-modal';
+import { WarehouseFormModal } from './modals/warehouse-form-modal';
 import { ProductKardex } from './product-kardex';
-import { StockMovementModal } from './stock-movement-modal';
+import { useAuthStore } from '@/store/auth/use-auth';
 
 
 export function StockList() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const { user } = useAuthStore()
+  // Estado do Filtro de Depósito (null = Todos/Geral)
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string | null>(null);
 
-  // Controle de Modais
+  // Modais
   const [movementModalOpen, { open: openMovement, close: closeMovement }] = useDisclosure(false);
   const [historyDrawerOpen, { open: openHistory, close: closeHistory }] = useDisclosure(false);
+  const [warehouseModalOpen, { open: openWarehouse, close: closeWarehouse }] = useDisclosure(false);
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // Busca produtos (já traz o saldo atual no objeto stock)
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ['products'], // Reutiliza cache de produtos
+  // 1. Busca Produtos
+  const { data: products = [], isLoading: loadingProducts } = useQuery({
+    queryKey: ['products'],
     queryFn: getProducts,
   });
 
-  // Handlers
-  const handleOpenMovement = (product: Product) => {
-    setSelectedProduct(product);
-    openMovement();
-  };
+  // 2. Busca Depósitos para o Filtro
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses'],
+    queryFn: getWarehouses,
+  });
 
-  const handleOpenHistory = (product: Product) => {
-    setSelectedProduct(product);
-    openHistory();
-  };
+  // Opções para o Select
+  const warehouseOptions = [
+    { value: 'all', label: 'Todos os Depósitos (Visão Geral)' },
+    ...warehouses.map(w => ({ value: w.id, label: w.name }))
+  ];
 
-  const handleSuccessMovement = () => {
-    // Invalida para atualizar o saldo na lista
-    queryClient.invalidateQueries({ queryKey: ['products'] });
-  };
-
-  // Filtro local
+  // Filtro local de Texto
   const filteredData = useMemo(() => {
     return products.filter(item =>
       item.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -59,7 +64,14 @@ export function StockList() {
     );
   }, [products, search]);
 
-  // Definição das Colunas Focadas em Estoque
+  useMemo(() => {
+    const warehouse = warehouses.find((warehouse) => warehouse.responsibleUserId === user?.id)
+    if (warehouse) {
+      setSelectedWarehouseId(warehouse.id)
+    }
+  }, [user])
+
+  // Definição das Colunas Dinâmicas
   const columns = useMemo<ColumnDef<Product>[]>(
     () => [
       {
@@ -78,11 +90,40 @@ export function StockList() {
         ),
       },
       {
-        header: 'Saldo Atual',
-        accessorKey: 'stock.quantity',
+        id: 'stock',
+        header: selectedWarehouseId && selectedWarehouseId !== 'all'
+          ? `Saldo em ${warehouses.find(w => w.id === selectedWarehouseId)?.name}`
+          : 'Saldo Total',
+        accessorKey: 'stock',
         cell: ({ row }) => {
-          const qty = Number(row.original.totalStock || 0);
-          const min = Number(row.original.stock?.minStock || 0);
+          const product = row.original;
+          let qty = 0;
+          let min = 0;
+
+          // Lógica de Filtragem de Estoque
+          if (selectedWarehouseId && selectedWarehouseId !== 'all') {
+            // Se tem filtro, busca o item específico daquele depósito
+            // Nota: Se for variação, temos que somar o estoque das variações NAQUELE depósito
+            if (product.variants && product.variants.length > 0) {
+              qty = product.variants.reduce((acc: number, v: any) => {
+                const stockInWarehouse = v.stock?.find((s: any) => s.warehouseId === selectedWarehouseId);
+                return acc + Number(stockInWarehouse?.quantity || 0);
+              }, 0);
+            } else {
+              // Produto simples
+              const stockInWarehouse = Array.isArray(product.stock)
+                ? product.stock.find((s: any) => s.warehouseId === selectedWarehouseId)
+                : (product.stock?.warehouseId === selectedWarehouseId ? product.stock : null);
+
+              qty = Number(stockInWarehouse?.quantity || 0);
+              min = Number(stockInWarehouse?.minStock || 0);
+            }
+          } else {
+            // Sem filtro: Usa o total calculado pelo backend
+            qty = Number(product.totalStock || 0);
+            const defaultStock = Array.isArray(product.stock) ? product.stock[0] : product.stock;
+            min = Number(defaultStock?.minStock || 0);
+          }
 
           let color = 'gray';
           if (qty <= 0) color = 'red';
@@ -91,8 +132,13 @@ export function StockList() {
 
           return (
             <Group gap={6}>
-              <Badge color={color} variant="light" size="lg">
-                {qty} {row.original.unit}
+              <Badge
+                color={color}
+                variant="light"
+                size="lg"
+                leftSection={product.variants?.length ? <IconVersions size={14} /> : undefined}
+              >
+                {qty} {product.unit}
               </Badge>
               {qty <= min && (
                 <Tooltip label="Estoque Baixo ou Zerado">
@@ -104,15 +150,6 @@ export function StockList() {
         }
       },
       {
-        header: 'Estoque Mín/Máx',
-        accessorKey: 'stock.minStock',
-        cell: ({ row }) => (
-          <Text size="sm" c="dimmed">
-            {Number(row.original.stock?.minStock || 0)} / {Number(row.original.stock?.maxStock || 0) || '∞'}
-          </Text>
-        ),
-      },
-      {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
@@ -122,7 +159,10 @@ export function StockList() {
               variant="light"
               mr="xs"
               leftSection={<IconArrowsExchange size={14} />}
-              onClick={() => handleOpenMovement(row.original)}
+              onClick={() => {
+                setSelectedProduct(row.original);
+                openMovement();
+              }}
             >
               Movimentar
             </Button>
@@ -136,9 +176,12 @@ export function StockList() {
               <Menu.Dropdown>
                 <Menu.Item
                   leftSection={<IconHistory size={16} />}
-                  onClick={() => handleOpenHistory(row.original)}
+                  onClick={() => {
+                    setSelectedProduct(row.original);
+                    openHistory();
+                  }}
                 >
-                  Ver Histórico (Kardex)
+                  Ver Histórico
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
@@ -146,38 +189,70 @@ export function StockList() {
         ),
       },
     ],
-    []
+    [selectedWarehouseId, warehouses]
   );
 
   return (
     <>
-      <Flex justify="space-between" mb="lg" gap="md">
-        <TextInput
-          placeholder="Buscar produto por nome ou SKU..."
-          leftSection={<IconSearch size={16} />}
-          style={{ flex: 1, maxWidth: 400 }}
-          value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
-        />
-        {/* Aqui poderíamos ter botões de filtros rápidos: "Ver apenas estoque baixo" */}
-      </Flex>
+      <Paper p="md" mb="lg" withBorder bg="var(--mantine-color-default)">
+        <Flex justify="space-between" align="center" gap="md" wrap="wrap">
+
+          {/* BARRA DE BUSCA E FILTROS */}
+          <Group style={{ flex: 1 }}>
+            <TextInput
+              placeholder="Buscar produto..."
+              leftSection={<IconSearch size={16} />}
+              value={search}
+              onChange={(e) => setSearch(e.currentTarget.value)}
+              style={{ minWidth: 300 }}
+            />
+
+            <Select
+              placeholder="Filtrar por Depósito"
+              data={warehouseOptions}
+              value={selectedWarehouseId || 'all'}
+              onChange={(val) => setSelectedWarehouseId(val)}
+              leftSection={<IconBuildingWarehouse size={16} />}
+              allowDeselect={false}
+              w={280}
+            />
+          </Group>
+
+          {/* AÇÕES GERAIS */}
+          {user?.role !== 'SELLER' &&
+            <Button
+              variant="default"
+              leftSection={<IconPlus size={16} />}
+              onClick={openWarehouse}
+            >
+              Novo Depósito
+            </Button>
+          }
+        </Flex>
+      </Paper>
 
       <DataGrid
         data={filteredData}
         columns={columns}
       />
 
-      {/* MODAL DE MOVIMENTAÇÃO (Entrada/Saída) */}
+      {/* MODAL DE MOVIMENTAÇÃO */}
       {selectedProduct && (
         <StockMovementModal
           opened={movementModalOpen}
           onClose={closeMovement}
-          product={selectedProduct} // <--- Passa o objeto todo
-          onSuccess={handleSuccessMovement}
+          product={selectedProduct}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['products'] })}
         />
       )}
 
-      {/* DRAWER DE HISTÓRICO (KARDEX) */}
+      {/* MODAL DE CRIAÇÃO DE DEPÓSITO */}
+      <WarehouseFormModal
+        opened={warehouseModalOpen}
+        onClose={closeWarehouse}
+      />
+
+      {/* HISTÓRICO */}
       <Drawer
         opened={historyDrawerOpen}
         onClose={closeHistory}
