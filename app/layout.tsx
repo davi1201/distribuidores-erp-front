@@ -13,6 +13,8 @@ import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Notifications } from '@mantine/notifications';
 import { BillingModal } from '@/components/ui/modals/billing-modal';
+import { ProgressBarProvider } from '@/providers/progress-bar.provider';
+import { NotificationListener } from '@/components/notifications/notification-listener';
 
 
 export default function RootLayout({ children }: { children: any }) {
@@ -33,7 +35,10 @@ export default function RootLayout({ children }: { children: any }) {
             <Notifications position="top-center" />
             <AuthProvider>
               <BillingModal />
-              {children}
+              <NotificationListener />
+              <ProgressBarProvider>
+                {children}
+              </ProgressBarProvider>
             </AuthProvider>
           </MantineProvider>
         </QueryClientProvider>

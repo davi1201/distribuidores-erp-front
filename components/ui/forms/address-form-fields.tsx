@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   SimpleGrid, InputBase, Loader, Group, Select, ActionIcon,
   TextInput, Divider, Textarea,
@@ -114,6 +114,12 @@ export function AddressFormFields({
       handleCepSearch(currentZipCode);
     }
   }, [currentZipCode]);
+
+  useMemo(() => {
+    if (withCategory === false) {
+      delete form.values[`${path}`]['categoryId'];
+    }
+  }, [withCategory]);
 
   return (
     <>

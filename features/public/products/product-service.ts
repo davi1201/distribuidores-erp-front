@@ -21,6 +21,11 @@ export interface StockItem {
 }
 
 export interface Product {
+  inventory: any;
+  matrixStock: any;
+  imagesUrl: any;
+  supplier: never[];
+  parentId: boolean;
   totalStock: number;
   variants: any[];
   id: string;
@@ -30,7 +35,7 @@ export interface Product {
   brand?: string;
   unit: string;
   description?: string;
-  
+
   // Fiscal
   ncm: string;
   cest?: string;
@@ -48,6 +53,7 @@ export interface Product {
   prices: ProductPrice[];
   stock?: StockItem; // Pode vir como array ou objeto dependendo do back, ajustamos para objeto único por enquanto
   isActive: boolean;
+  suppliers?: any[];
 }
 
 // --- SERVICE ---
@@ -67,11 +73,21 @@ export const createProduct = async (payload: any): Promise<Product> => {
   return data;
 };
 
+export const createProductBatch = async (payload: any): Promise<Product> => {
+  const { data } = await api.post('/products/batch', payload);
+  return data;
+};
+
 export const updateProduct = async (id: string, payload: any): Promise<Product> => {
-  const { data } = await api.patch(`/products/${id}`, payload);
+  const { data } = await api.patch(`/products/batch/${id}`, payload);
   return data;
 };
 
 export const deleteProduct = async (id: string): Promise<void> => {
   await api.delete(`/products/${id}`);
+};
+
+export const getSellableProducts = async (): Promise<Product[]> => {
+  const { data } = await api.get('/products/sellable');
+  return data;
 };

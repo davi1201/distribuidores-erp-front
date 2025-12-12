@@ -44,6 +44,7 @@ import { IMaskInput } from 'react-imask';
 import api from '@/lib/api';
 import { formatDocumentNumber, formatPhoneNumber } from '@/utils/formatter';
 import { AddressFormFields } from '@/components/ui/forms/address-form-fields';
+import { TenantEmailConfigForm } from '../../tenant/components/tenant-email-config-form';
 
 export function UserAccountDisplay() {
   const { user, setUser } = useAuthStore();
@@ -411,6 +412,7 @@ export function UserAccountDisplay() {
           </Card>
         </Grid.Col>
       </Grid>
+      <TenantEmailConfigForm />
     </Stack>
   );
 }

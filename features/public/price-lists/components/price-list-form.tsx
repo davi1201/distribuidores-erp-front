@@ -9,7 +9,7 @@ import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPriceList, updatePriceList, PriceList } from '../price-lists-service';
-import { IconCheck, IconDeviceFloppy } from '@tabler/icons-react';
+import { IconCheck, IconDeviceFloppy, IconPercentage } from '@tabler/icons-react';
 
 interface PriceListFormProps {
   initialData?: PriceList | null;
@@ -96,7 +96,7 @@ export function PriceListForm({ initialData, onSuccess, onCancel }: PriceListFor
           label="Ajuste Automático de Preço"
           description="Percentual aplicado sobre o preço base do produto. Use valores negativos para desconto."
           placeholder="Ex: -10 para 10% de desconto"
-          suffix="%"
+          rightSection={<IconPercentage size={16} color="gray" />}
           decimalScale={2}
           fixedDecimalScale
           allowNegative // Permite valores negativos

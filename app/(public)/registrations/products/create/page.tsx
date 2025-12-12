@@ -1,6 +1,7 @@
 
 import { PageHeader } from '@/components/page-header/page-header';
 import { ProductForm } from '@/features/public/products/components/product-form';
+import { ProductWizard } from '@/features/public/products/components/product-wizard';
 import { Stack } from '@mantine/core';
 
 
@@ -15,7 +16,7 @@ export default function CreateProductPage() {
         ]}
       />
 
-      <ProductForm />
+      <ProductWizard />
     </Stack>
   );
 }

@@ -28,13 +28,21 @@ interface BasicInfoPanelProps {
 
 export function BasicInfoPanel({ form, categories, onAddCategory, addressCategories, contacts }: BasicInfoPanelProps) {
   const [loadingCnpj, setLoadingCnpj] = useState(false);
+  const [lastSearchedCnpj, setLastSearchedCnpj] = useState<string>(form.values.document);
 
   const handleCnpjSearch = async (value?: string) => {
-    // Usa o valor passado ou o do formulário
     const docInput = value || form.values.document;
     const doc = docInput.replace(/\D/g, '');
 
     if (form.values.personType !== 'PJ' || doc.length !== 14) return;
+
+    console.log(form.values);
+
+    console.log(lastSearchedCnpj);
+
+
+
+    if (doc === lastSearchedCnpj) return;
 
     setLoadingCnpj(true);
     try {
@@ -50,31 +58,52 @@ export function BasicInfoPanel({ form, categories, onAddCategory, addressCategor
         }
       }
 
+      // Verifica se já existe endereço principal (índice 0)
+      const hasMainAddress = form.values.addresses?.length > 0;
+
+      // Verifica se já existe contato principal
+      const hasMainContact = form.values.contacts?.length > 0;
+
+      // Prepara novo endereço
+      const newAddress = {
+        zipCode: data.cep.replace(/\D/g, ''),
+        number: data.numero,
+        complement: data.complemento,
+      };
+
+      // Prepara novo contato
+      const newContact = {
+        name: onlyText(data.nome_fantasia) || onlyText(data.razao_social),
+        phone: data.telefones?.[0] ? `${data.telefones[0].ddd}9${data.telefones[0].numero}` : '',
+        role: 'Principal'
+      };
+
       form.setValues({
-        // ...form.values,
         name: data.razao_social,
         corporateName: data.razao_social,
         tradeName: onlyText(data.nome_fantasia) || onlyText(data.razao_social),
         email: data.email?.toLowerCase() || form.values.email,
-        // Adiciona lógica de formatação básica para o telefone vindo da API
         phone: data.telefones?.[0] ? `${data.telefones[0].ddd}9${data.telefones[0].numero}` : form.values.phone,
-        addresses: [
-          ...form.values.addresses,
-          {
-            zipCode: data.cep.replace(/\D/g, ''),
-            number: data.numero,
-            complement: data.complemento,
-          }
-        ],
-        contacts: [
-          ...form.values.contacts,
-          {
-            name: onlyText(data.nome_fantasia) || onlyText(data.razao_social),
-            phone: data.telefones?.[0] ? `${data.telefones[0].ddd}9${data.telefones[0].numero}` : '',
-            role: 'Principal'
-          }
-        ]
+
+        // Se já tem endereço, atualiza o primeiro. Senão, adiciona novo
+        addresses: hasMainAddress
+          ? [
+            { ...form.values.addresses[0], ...newAddress },
+            ...form.values.addresses.slice(1)
+          ]
+          : [newAddress, ...(form.values.addresses || [])],
+
+        // Se já tem contato, atualiza o primeiro. Senão, adiciona novo
+        contacts: hasMainContact
+          ? [
+            { ...form.values.contacts[0], ...newContact },
+            ...form.values.contacts.slice(1)
+          ]
+          : [newContact, ...(form.values.contacts || [])]
       });
+
+      // Marca este CNPJ como já buscado
+      setLastSearchedCnpj(doc);
 
       notifications.show({ message: 'Dados da empresa carregados!', color: 'green' });
     } catch (error) {
@@ -97,6 +126,8 @@ export function BasicInfoPanel({ form, categories, onAddCategory, addressCategor
               form.setFieldValue('personType', val);
               form.setFieldValue('document', '');
               form.clearErrors();
+              // Reseta o último CNPJ buscado ao mudar tipo de pessoa
+              setLastSearchedCnpj('');
             }}
           />
           <Group align="flex-end" gap="xs">

@@ -35,12 +35,34 @@ export interface CreateMovementPayload {
   documentReference?: string;
 }
 
-export interface TransferStockPayload {
+export interface TransferItem {
+  id?: string; // Opcional na criação
   productId: string;
-  fromWarehouseId: string;
-  toWarehouseId: string;
+  productName?: string; // Auxiliar para UI
   quantity: number;
-  reason?: string;
+}
+
+export interface StockTransfer {
+  id: string;
+  code: number;
+  status: 'PENDING' | 'APPROVED' | 'IN_TRANSIT' | 'COMPLETED' | 'REJECTED';
+  createdAt: string;
+  requester: { name: string };
+  origin: { id: string; name: string };
+  destination: { id: string; name: string };
+  items: {
+    product: { name: string; sku: string; unit: string };
+    quantity: number;
+  }[];
+}
+
+export interface CreateTransferPayload {
+  originWarehouseId: string;
+  destinationWarehouseId: string;
+  items: {
+    productId: string;
+    quantity: number;
+  }[];
 }
 
 export const createStockMovement = async (payload: CreateMovementPayload) => {
@@ -70,7 +92,33 @@ export const createWarehouse = async (payload: { name: string; responsibleUserId
   return data;
 };
 
-export const transferStock = async (payload: TransferStockPayload) => {
-  const { data } = await api.post('/stock/transfer', payload);
+export async function getStockProducts(params: { warehouseId?: string; search?: string }) {
+  const { data } = await api.get('/stock/products', { params });
   return data;
-};
+}
+
+export async function getTransfers() {
+  const { data } = await api.get('/stock/transfers');
+  return data as StockTransfer[];
+}
+
+export async function createTransfer(payload: CreateTransferPayload) {
+  const { data } = await api.post('/stock/transfers', payload);
+  return data;
+}
+
+export async function approveTransfer(transferId: string) {
+  const { data } = await api.patch(`/stock/transfers/${transferId}/approve`);
+  return data;
+}
+
+export async function completeTransfer(transferId: string) {
+  const { data } = await api.patch(`/stock/transfers/${transferId}/complete`);
+  return data;
+}
+
+export async function rejectTransfer(transferId: string) {
+  // Caso implemente rejeição no backend
+  const { data } = await api.patch(`/stock/transfers/${transferId}/reject`);
+  return data;
+}

@@ -3,13 +3,13 @@
 import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  Paper, Title, Text, TextInput, PasswordInput, Button,
-  Stack, Alert, LoadingOverlay, Center, ThemeIcon, Group, Skeleton
+  Paper, Title, Text, PasswordInput, Button,
+  Stack, Alert, LoadingOverlay, Center, ThemeIcon, Group, Skeleton, Avatar
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
-import { IconAlertCircle, IconCheck, IconBuildingSkyscraper, IconMail } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck, IconBuildingSkyscraper, IconMail, IconUser } from '@tabler/icons-react';
 import api from '@/lib/api';
 
 // Componente interno que usa useSearchParams
@@ -23,21 +23,20 @@ function AcceptInviteContent() {
     queryKey: ['validate-invite', token],
     queryFn: async () => {
       if (!token) throw new Error('Token não fornecido');
+      // O backend agora retorna { valid: true, name: '...', email: '...', companyName: '...' }
       const { data } = await api.get(`/team/invite/validate?token=${token}`);
-      return data; // Espera: { valid: true, email: '...', companyName: '...', role: '...' }
+      return data;
     },
     enabled: !!token,
-    retry: false, // Não tenta de novo se der 404/400
+    retry: false,
   });
 
   const form = useForm({
     initialValues: {
-      name: '',
       password: '',
       confirmPassword: '',
     },
     validate: {
-      name: (val) => (val.length < 3 ? 'Nome deve ter pelo menos 3 caracteres' : null),
       password: (val) => (val.length < 6 ? 'A senha deve ter no mínimo 6 caracteres' : null),
       confirmPassword: (val, values) => (val !== values.password ? 'As senhas não conferem' : null),
     },
@@ -45,16 +44,16 @@ function AcceptInviteContent() {
 
   const mutation = useMutation({
     mutationFn: async (values: typeof form.values) => {
+      // Não precisamos enviar o nome, pois já foi definido no pré-provisionamento
       await api.post('/team/invite/accept', {
         token,
-        name: values.name,
         password: values.password,
       });
     },
     onSuccess: () => {
       notifications.show({
         title: 'Bem-vindo! 🚀',
-        message: 'Sua conta foi criada com sucesso. Faça login para continuar.',
+        message: 'Sua conta foi ativada com sucesso. Faça login para continuar.',
         color: 'green'
       });
       router.push('/login');
@@ -62,7 +61,7 @@ function AcceptInviteContent() {
     onError: (err: any) => {
       notifications.show({
         title: 'Erro',
-        message: err.response?.data?.message || 'Falha ao criar conta.',
+        message: err.response?.data?.message || 'Falha ao ativar conta.',
         color: 'red'
       });
     }
@@ -83,7 +82,7 @@ function AcceptInviteContent() {
       <Center h={300}>
         <Stack align="center" gap="xs">
           <LoadingOverlay visible={true} zIndex={0} overlayProps={{ radius: "sm", blur: 2 }} />
-          <Text>Verificando convite...</Text>
+          <Text>Validando credenciais...</Text>
         </Stack>
       </Center>
     );
@@ -99,51 +98,49 @@ function AcceptInviteContent() {
     );
   }
 
-  // --- FORMULÁRIO DE CADASTRO ---
+  // --- FORMULÁRIO DE ATIVAÇÃO ---
 
   return (
     <Paper withBorder shadow="md" p={30} mt={30} radius="md" style={{ maxWidth: 450, width: '100%' }}>
-      <Title order={2} ta="center" mt="md" mb="xs">
-        Junte-se à Equipe
-      </Title>
 
-      <Text c="dimmed" size="sm" ta="center" mb="xl">
-        Você foi convidado para acessar o sistema.
-      </Text>
+      {/* Cabeçalho Personalizado */}
+      <Stack align="center" gap={5} mb="xl">
+        <Avatar size="lg" color="blue" radius="xl">
+          {inviteData?.name?.charAt(0)}
+        </Avatar>
+        <Title order={2} ta="center">
+          Olá, {inviteData?.name?.split(' ')[0]}!
+        </Title>
+        <Text c="dimmed" size="sm" ta="center">
+          Defina sua senha para acessar o sistema da <b>{inviteData?.companyName}</b>.
+        </Text>
+      </Stack>
 
+      {/* Resumo dos Dados */}
       <Paper bg="var(--mantine-color-default)" p="md" radius="md" mb="lg">
         <Stack gap="xs">
           <Group>
-            <ThemeIcon variant="light" color="blue"><IconBuildingSkyscraper size={16} /></ThemeIcon>
-            <div>
-              <Text size="xs" c="dimmed" tt="uppercase" fw={700}>Empresa</Text>
-              <Text fw={600}>{inviteData?.companyName}</Text>
-            </div>
+            <ThemeIcon variant="light" color="blue" size="sm"><IconUser size={14} /></ThemeIcon>
+            <Text size="sm" fw={500}>{inviteData?.name}</Text>
           </Group>
           <Group>
-            <ThemeIcon variant="light" color="blue"><IconMail size={16} /></ThemeIcon>
-            <div>
-              <Text size="xs" c="dimmed" tt="uppercase" fw={700}>Seu Email</Text>
-              <Text fw={600}>{inviteData?.email}</Text>
-            </div>
+            <ThemeIcon variant="light" color="blue" size="sm"><IconMail size={14} /></ThemeIcon>
+            <Text size="sm" fw={500}>{inviteData?.email}</Text>
+          </Group>
+          <Group>
+            <ThemeIcon variant="light" color="blue" size="sm"><IconBuildingSkyscraper size={14} /></ThemeIcon>
+            <Text size="sm" fw={500}>{inviteData?.companyName}</Text>
           </Group>
         </Stack>
       </Paper>
 
       <form onSubmit={form.onSubmit((values) => mutation.mutate(values))}>
         <Stack>
-          <TextInput
-            label="Seu Nome Completo"
-            placeholder="Como você quer ser chamado"
-            required
-            data-autofocus
-            {...form.getInputProps('name')}
-          />
-
           <PasswordInput
             label="Crie sua Senha"
             placeholder="Mínimo 6 caracteres"
             required
+            size="md"
             {...form.getInputProps('password')}
           />
 
@@ -151,6 +148,7 @@ function AcceptInviteContent() {
             label="Confirme a Senha"
             placeholder="Repita a senha"
             required
+            size="md"
             {...form.getInputProps('confirmPassword')}
           />
 
@@ -162,7 +160,7 @@ function AcceptInviteContent() {
             loading={mutation.isPending}
             leftSection={<IconCheck size={18} />}
           >
-            Criar Conta e Acessar
+            Ativar Minha Conta
           </Button>
         </Stack>
       </form>
@@ -174,14 +172,14 @@ function AcceptInviteContent() {
 function LoadingFallback() {
   return (
     <Paper withBorder shadow="md" p={30} mt={30} radius="md" style={{ maxWidth: 450, width: '100%' }}>
-      <Stack gap="md">
-        <Skeleton height={30} width="70%" mx="auto" />
-        <Skeleton height={20} width="50%" mx="auto" />
-        <Skeleton height={100} />
-        <Skeleton height={40} />
-        <Skeleton height={40} />
-        <Skeleton height={40} />
-        <Skeleton height={50} />
+      <Stack gap="md" align="center">
+        <Skeleton height={80} circle mb="md" />
+        <Skeleton height={30} width="70%" />
+        <Skeleton height={20} width="50%" />
+        <Skeleton height={100} width="100%" mt="md" />
+        <Skeleton height={40} width="100%" />
+        <Skeleton height={40} width="100%" />
+        <Skeleton height={50} width="100%" mt="lg" />
       </Stack>
     </Paper>
   );

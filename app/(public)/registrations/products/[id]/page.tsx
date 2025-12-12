@@ -7,6 +7,7 @@ import { IconAlertCircle } from '@tabler/icons-react';
 import { getProductById } from '@/features/public/products/product-service';
 import { PageHeader } from '@/components/page-header/page-header';
 import { ProductForm } from '@/features/public/products/components/product-form';
+import { ProductWizard } from '@/features/public/products/components/product-wizard';
 
 export default function EditProductPage() {
   const { id } = useParams();
@@ -45,7 +46,7 @@ export default function EditProductPage() {
         ]}
       />
 
-      <ProductForm initialData={product} />
+      <ProductWizard initialData={product} />
     </Stack>
   );
 }

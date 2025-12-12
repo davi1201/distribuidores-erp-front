@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Modal, Stack, TextInput, NumberInput, Select, Button, Group, Text, SegmentedControl, Divider, SimpleGrid, Paper } from '@mantine/core';
+import { Modal, Stack, TextInput, NumberInput, Select, Button, Group, Text, SegmentedControl } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
-import { IconArrowDown, IconArrowUp, IconDeviceFloppy, IconVersions, IconArrowsExchange } from '@tabler/icons-react';
-import { createStockMovement, transferStock, getWarehouses, MovementType } from '../../stock-service';
+import { IconArrowDown, IconArrowUp, IconDeviceFloppy, IconVersions } from '@tabler/icons-react';
+import { createStockMovement, MovementType } from '../../stock-service';
 import { Product } from '@/features/public/products/product-service';
-
 
 interface StockMovementModalProps {
   opened: boolean;
@@ -20,15 +19,6 @@ interface StockMovementModalProps {
 export function StockMovementModal({ opened, onClose, product, onSuccess }: StockMovementModalProps) {
   const queryClient = useQueryClient();
 
-  // Busca depósitos disponíveis para transferência
-  const { data: warehouses = [] } = useQuery({
-    queryKey: ['warehouses'],
-    queryFn: getWarehouses,
-    staleTime: 1000 * 60 * 5
-  });
-
-  const warehouseOptions = warehouses.map(w => ({ value: w.id, label: w.name }));
-
   const hasVariants = product.variants && product.variants.length > 0;
 
   const variantOptions = hasVariants
@@ -38,22 +28,16 @@ export function StockMovementModal({ opened, onClose, product, onSuccess }: Stoc
   const form = useForm({
     initialValues: {
       productId: product.id,
-      type: 'ENTRY' as MovementType | 'TRANSFER', // Adicionado TRANSFER
+      type: 'ENTRY' as MovementType, // Apenas ENTRY ou EXIT agora
       quantity: 1,
       reasonType: '',
       reasonCustom: '',
       documentReference: '',
-      // Campos de Transferência
-      fromWarehouseId: '',
-      toWarehouseId: '',
     },
     validate: {
       quantity: (val) => (val <= 0 ? 'Quantidade deve ser maior que zero' : null),
       productId: (val) => (!val ? 'Selecione o produto/variação' : null),
-      // Validação condicional
-      reasonType: (val, values) => (values.type !== 'TRANSFER' && !val ? 'Selecione um motivo' : null),
-      fromWarehouseId: (val, values) => (values.type === 'TRANSFER' && !val ? 'Origem obrigatória' : null),
-      toWarehouseId: (val, values) => (values.type === 'TRANSFER' && !val ? 'Destino obrigatório' : null),
+      reasonType: (val) => (!val ? 'Selecione um motivo' : null),
     },
   });
 
@@ -61,33 +45,16 @@ export function StockMovementModal({ opened, onClose, product, onSuccess }: Stoc
     if (opened) {
       form.reset();
       form.setFieldValue('productId', hasVariants ? '' : product.id);
-
-      // Tenta preencher defaults para transferência
-      if (warehouses.length >= 2) {
-        // Ex: Origem = Matriz (primeiro), Destino = Segundo
-        form.setFieldValue('fromWarehouseId', warehouses[0].id);
-      }
     }
-  }, [opened, product, warehouses]);
+  }, [opened, product, hasVariants]);
 
   const mutation = useMutation({
     mutationFn: async (values: typeof form.values) => {
       const finalReason = values.reasonCustom
         ? `${values.reasonType ? values.reasonType + ' - ' : ''}${values.reasonCustom}`
-        : values.reasonType || 'Transferência Manual';
+        : values.reasonType;
 
-      // FLUXO DE TRANSFERÊNCIA
-      if (values.type === 'TRANSFER') {
-        return transferStock({
-          productId: values.productId,
-          fromWarehouseId: values.fromWarehouseId,
-          toWarehouseId: values.toWarehouseId,
-          quantity: Number(values.quantity),
-          reason: finalReason
-        });
-      }
-
-      // FLUXO DE ENTRADA/SAÍDA (Padrão)
+      // FLUXO DE ENTRADA/SAÍDA (Ajuste Rápido)
       return createStockMovement({
         productId: values.productId,
         type: values.type as MovementType,
@@ -98,7 +65,7 @@ export function StockMovementModal({ opened, onClose, product, onSuccess }: Stoc
     },
     onSuccess: () => {
       notifications.show({ message: 'Movimentação realizada com sucesso!', color: 'green' });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-products'] });
       queryClient.invalidateQueries({ queryKey: ['product-history'] });
       if (onSuccess) onSuccess();
       onClose();
@@ -118,12 +85,16 @@ export function StockMovementModal({ opened, onClose, product, onSuccess }: Stoc
     <Modal
       opened={opened}
       onClose={onClose}
-      title={<Text fw={700}>Movimentar Estoque: {product.name}</Text>}
+      title={<Text fw={700}>Ajuste Rápido de Estoque</Text>}
       centered
-      size="lg"
+      size="md"
     >
       <form onSubmit={form.onSubmit((values) => mutation.mutate(values))}>
         <Stack>
+          <Text size="sm" c="dimmed" mb={-10}>
+            Produto: <b>{product.name}</b>
+          </Text>
+
           {hasVariants && (
             <Select
               label="Selecione a Variação"
@@ -158,15 +129,6 @@ export function StockMovementModal({ opened, onClose, product, onSuccess }: Stoc
                   </Group>
                 )
               },
-              {
-                value: 'TRANSFER',
-                label: (
-                  <Group gap={6}>
-                    <IconArrowsExchange size={16} color="yellow" />
-                    <span>Transferência</span>
-                  </Group>
-                )
-              },
             ]}
           />
 
@@ -180,71 +142,47 @@ export function StockMovementModal({ opened, onClose, product, onSuccess }: Stoc
             {...form.getInputProps('quantity')}
           />
 
-          {operationType === 'TRANSFER' ? (
-            <Paper withBorder p="sm" bg="var(--mantine-color-default)">
-              <Text size="sm" fw={500} mb="xs">Rota da Transferência</Text>
-              <SimpleGrid cols={2}>
-                <Select
-                  label="Origem (Sai de)"
-                  placeholder="Selecione..."
-                  data={warehouseOptions}
-                  required
-                  {...form.getInputProps('fromWarehouseId')}
-                />
-                <Select
-                  label="Destino (Entra em)"
-                  placeholder="Selecione..."
-                  data={warehouseOptions.filter(w => w.value !== form.values.fromWarehouseId)}
-                  required
-                  {...form.getInputProps('toWarehouseId')}
-                />
-              </SimpleGrid>
-            </Paper>
-          ) : (
-            <Select
-              label="Motivo"
-              placeholder="Selecione..."
-              data={operationType === 'ENTRY' ? [
-                'Compra / Reposição',
-                'Produção Interna',
-                'Devolução de Cliente',
-                'Ajuste de Inventário (Sobra)',
-                'Bonificação Recebida'
-              ] : [
-                'Venda',
-                'Perda / Quebra',
-                'Uso Interno / Consumo',
-                'Ajuste de Inventário (Falta)',
-                'Devolução ao Fornecedor'
-              ]}
-              required
-              {...form.getInputProps('reasonType')}
-            />
-          )}
+          <Select
+            label="Motivo"
+            placeholder="Selecione..."
+            data={operationType === 'ENTRY' ? [
+              'Compra / Reposição',
+              'Produção Interna',
+              'Devolução de Cliente',
+              'Ajuste de Inventário (Sobra)',
+              'Bonificação Recebida'
+            ] : [
+              'Perda / Quebra',
+              'Uso Interno / Consumo',
+              'Ajuste de Inventário (Falta)',
+              'Devolução ao Fornecedor',
+              'Venda Avulsa (Sem Pedido)'
+            ]}
+            required
+            {...form.getInputProps('reasonType')}
+          />
 
           <TextInput
             label="Observação / Justificativa"
-            placeholder={operationType === 'TRANSFER' ? "Motivo da transferência..." : "Detalhes adicionais..."}
+            placeholder="Detalhes adicionais..."
             {...form.getInputProps('reasonCustom')}
           />
 
-          {operationType !== 'TRANSFER' && (
-            <TextInput
-              label="Nº Documento / Nota"
-              placeholder="Ex: NF 1234"
-              {...form.getInputProps('documentReference')}
-            />
-          )}
+          <TextInput
+            label="Nº Documento / Nota (Opcional)"
+            placeholder="Ex: NF 1234"
+            {...form.getInputProps('documentReference')}
+          />
 
           <Button
             type="submit"
             fullWidth
             mt="md"
             loading={mutation.isPending}
-            color={operationType === 'ENTRY' ? 'green' : operationType === 'EXIT' ? 'red' : 'blue'}
+            color={operationType === 'ENTRY' ? 'green' : 'red'}
             leftSection={<IconDeviceFloppy size={18} />}
           >
-            Confirmar {operationType === 'ENTRY' ? 'Entrada' : operationType === 'EXIT' ? 'Saída' : 'Transferência'}
+            Confirmar {operationType === 'ENTRY' ? 'Entrada' : 'Saída'}
           </Button>
         </Stack>
       </form>

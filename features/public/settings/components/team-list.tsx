@@ -4,12 +4,16 @@ import { useMemo, useState, useEffect } from 'react';
 import {
   Paper, Group, Text, Button, Avatar, Badge, ActionIcon,
   Modal, TextInput, Select, Stack, Alert, Progress,
-  Menu
+  Menu, NumberInput, Divider,
+  InputBase
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
-import { IconTrash, IconMail, IconUserPlus, IconAlertCircle, IconDots, IconPencil, IconDeviceFloppy, IconShieldLock } from '@tabler/icons-react';
+import {
+  IconTrash, IconMail, IconUserPlus, IconAlertCircle, IconDots,
+  IconPencil, IconShieldLock, IconBrandWhatsapp, IconPercentage, IconId
+} from '@tabler/icons-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 import { useAuthStore } from '@/store/auth/use-auth';
@@ -17,15 +21,16 @@ import api from '@/lib/api';
 import { DataGrid } from '@/components/ui/data-grid/data-grid';
 import { UserPermissionsModal } from '../../user/components/user-permissions-modal';
 import { updateMemberRole } from '../../team/team-service';
+import { IMaskInput } from 'react-imask';
 
 // Interface auxiliar para tipar o membro
 interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: 'OWNER' | 'ADMIN' | 'SELLER' | 'SUPPORT';
+  role: 'ADMIN' | 'SELLER';
   isActive: boolean;
-  permissions: string[]; // Adicionado para o modal de permissões
+  permissions: string[];
 }
 
 export function TeamList() {
@@ -34,7 +39,7 @@ export function TeamList() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<TeamMember | null>(null);
   const [userToEdit, setUserToEdit] = useState<TeamMember | null>(null);
-  const [userToPermissions, setUserToPermissions] = useState<TeamMember | null>(null); // Estado para modal de permissões
+  const [userToPermissions, setUserToPermissions] = useState<TeamMember | null>(null);
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['team-members'],
@@ -44,11 +49,21 @@ export function TeamList() {
     }
   });
 
-  // --- FORM DE CONVITE ---
+  // --- FORM DE CONVITE ATUALIZADO ---
   const inviteForm = useForm({
-    initialValues: { email: '', role: 'SELLER' },
+    initialValues: {
+      name: '',
+      email: '',
+      role: 'SELLER',
+      // Campos específicos de Seller
+      whatsapp: '',
+      commissionRate: 0,
+      maxDiscount: 0
+    },
     validate: {
+      name: (val) => (val.length < 3 ? 'Nome obrigatório' : null),
       email: (val) => (/^\S+@\S+$/.test(val) ? null : 'Email inválido'),
+      whatsapp: (val, values) => (values.role === 'SELLER' && val.length < 10 ? 'WhatsApp inválido' : null),
     },
   });
 
@@ -57,7 +72,7 @@ export function TeamList() {
       await api.post('/team/invite', values);
     },
     onSuccess: () => {
-      notifications.show({ message: 'Convite enviado!', color: 'green' });
+      notifications.show({ message: 'Convite enviado com sucesso!', color: 'green' });
       setInviteModalOpen(false);
       inviteForm.reset();
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
@@ -166,7 +181,6 @@ export function TeamList() {
         cell: ({ row }) => {
           const member = row.original;
           if (user?.id === member.id) return null;
-          if (member.role === 'OWNER') return null;
 
           return (
             <Group gap={0} justify="flex-end">
@@ -232,30 +246,87 @@ export function TeamList() {
         columns={columns}
       />
 
-      {/* Modal de Convite */}
-      <Modal opened={inviteModalOpen} onClose={() => setInviteModalOpen(false)} title="Convidar Novo Usuário">
+      {/* Modal de Convite ATUALIZADO */}
+      <Modal
+        opened={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        title="Convidar Novo Usuário"
+        size={inviteForm.values.role === 'SELLER' ? 'lg' : 'md'}
+      >
         <form onSubmit={inviteForm.onSubmit((v) => inviteMutation.mutate(v))}>
           <Stack>
             <Alert color="blue" icon={<IconAlertCircle />}>
-              O usuário receberá um e-mail para criar a senha.
+              O usuário receberá um e-mail com o link para definir a senha e acessar.
             </Alert>
+
+            <Group grow>
+              <TextInput
+                label="Nome Completo"
+                placeholder="Ex: João Silva"
+                leftSection={<IconId size={16} />}
+                required
+                {...inviteForm.getInputProps('name')}
+              />
+              <Select
+                label="Função"
+                data={[
+                  { value: 'SELLER', label: 'Vendedor' },
+                  { value: 'ADMIN', label: 'Administrador' },
+                ]}
+                required
+                allowDeselect={false}
+                {...inviteForm.getInputProps('role')}
+              />
+            </Group>
+
             <TextInput
-              label="E-mail"
+              label="E-mail Corporativo"
               placeholder="exemplo@email.com"
               leftSection={<IconMail size={16} />}
               required
               {...inviteForm.getInputProps('email')}
             />
-            <Select
-              label="Função"
-              data={[
-                { value: 'SELLER', label: 'Vendedor' },
-                { value: 'ADMIN', label: 'Administrador' },
-              ]}
-              required
-              {...inviteForm.getInputProps('role')}
-            />
-            <Button type="submit" loading={inviteMutation.isPending} fullWidth>
+
+            {/* SEÇÃO CONDICIONAL PARA VENDEDORES */}
+            {inviteForm.values.role === 'SELLER' && (
+              <Paper withBorder p="md" bg="var(--mantine-color-default)" mt="xs">
+                <Text size="sm" fw={700} c="dimmed" mb="md" tt="uppercase">
+                  Configurações do Vendedor
+                </Text>
+                <Stack gap="md">
+                  <InputBase
+                    label="WhatsApp Profissional"
+                    component={IMaskInput}
+                    mask="(00) 0 0000-0000"
+                    placeholder="(11) 9 9999-9999"
+                    leftSection={<IconBrandWhatsapp size={16} />}
+                    {...inviteForm.getInputProps('whatsapp')}
+                  />
+                  <Group grow>
+                    <NumberInput
+                      label="Comissão (%)"
+                      description="Percentual padrão para vendas"
+                      placeholder="0"
+                      min={0}
+                      max={100}
+                      rightSection={<IconPercentage size={16} color="gray" />}
+                      {...inviteForm.getInputProps('commissionRate')}
+                    />
+                    <NumberInput
+                      label="Desc. Máximo Permitido (%)"
+                      description="Limite no carrinho de vendas"
+                      placeholder="5"
+                      min={0}
+                      max={100}
+                      rightSection={<IconPercentage size={16} color="gray" />}
+                      {...inviteForm.getInputProps('maxDiscount')}
+                    />
+                  </Group>
+                </Stack>
+              </Paper>
+            )}
+
+            <Button type="submit" loading={inviteMutation.isPending} fullWidth mt="md">
               Enviar Convite
             </Button>
           </Stack>

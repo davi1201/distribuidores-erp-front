@@ -9,7 +9,7 @@ import {
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { IconPlus, IconTrash, IconDeviceFloppy, IconEdit } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconDeviceFloppy, IconEdit, IconPercentage } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 
 import { createTaxProfile, updateTaxProfile, TaxProfile, TaxRule } from '../tax-profiles-service';
@@ -232,10 +232,10 @@ export function TaxProfileForm({ initialData, onSuccess, onCancel }: TaxProfileF
           </Group>
 
           <SimpleGrid cols={2}>
-            <NumberInput label="ICMS (%)" suffix="%" min={0} {...ruleForm.getInputProps('icmsRate')} />
-            <NumberInput label="IPI (%)" suffix="%" min={0} {...ruleForm.getInputProps('ipiRate')} />
-            <NumberInput label="PIS (%)" suffix="%" min={0} {...ruleForm.getInputProps('pisRate')} />
-            <NumberInput label="COFINS (%)" suffix="%" min={0} {...ruleForm.getInputProps('cofinsRate')} />
+            <NumberInput label="ICMS (%)" rightSection={<IconPercentage size={16} color="gray" />} min={0} {...ruleForm.getInputProps('icmsRate')} />
+            <NumberInput label="IPI (%)" rightSection={<IconPercentage size={16} color="gray" />} min={0} {...ruleForm.getInputProps('ipiRate')} />
+            <NumberInput label="PIS (%)" rightSection={<IconPercentage size={16} color="gray" />} min={0} {...ruleForm.getInputProps('pisRate')} />
+            <NumberInput label="COFINS (%)" rightSection={<IconPercentage size={16} color="gray" />} min={0} {...ruleForm.getInputProps('cofinsRate')} />
           </SimpleGrid>
 
           <Button fullWidth mt="md" onClick={handleSaveRule}>

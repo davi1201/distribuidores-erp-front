@@ -8,7 +8,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconCalculator, IconInfoCircle, IconPlus, IconEqual,
-  IconReceiptTax, IconHelp, IconCheck, IconX, IconMapPin, IconPercentage
+  IconReceiptTax, IconHelp, IconCheck, IconX, IconMapPin, IconPercentage,
+  IconCurrencyReal
 } from '@tabler/icons-react';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -181,8 +182,8 @@ export function PricingPanel({ form }: { form: UseFormReturnType<any> }) {
         <SimpleGrid cols={3}>
           <NumberInput
             label="Preço de Custo"
-            prefix="R$ "
-            decimalScale={2}
+            description="Custo base para o cálculo de preços"
+            leftSection={<IconCurrencyReal size={16} color="gray" />}
             fixedDecimalScale
             min={0}
             {...form.getInputProps('costPrice')}
@@ -190,14 +191,14 @@ export function PricingPanel({ form }: { form: UseFormReturnType<any> }) {
           <NumberInput
             label="Outras Despesas (%)"
             description="Comissões, Taxa Cartão, etc."
-            suffix="%"
+            rightSection={<IconPercentage size={16} color="gray" />}
             min={0}
             max={99.9}
             {...form.getInputProps('expenses')}
           />
           <NumberInput
             label="Margem de Lucro (%)"
-            suffix="%"
+            rightSection={<IconPercentage size={16} color="gray" />}
             min={0}
             description="Lucro líquido sobre o custo"
             {...form.getInputProps('markup')}

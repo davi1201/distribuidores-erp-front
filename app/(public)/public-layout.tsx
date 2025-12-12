@@ -22,6 +22,7 @@ import NavBar from '@/components/ui/navbar/navbar';
 import { formatDateOnlyBR } from '@/utils/formatter';
 import { SubscriptionWizardModal } from '@/components/subscription/subscription-wizard';
 import { useAppStore } from '@/store/app/use-app-store';
+import { NotificationBell } from '@/components/page-header/notification-bell';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
@@ -50,7 +51,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     >
       <AppShell.Header
         style={{
-          height: 60,
           backgroundColor: 'var(--mantine-color-body)',
           borderBottom: '1px solid var(--mantine-color-gray-3)',
         }}
@@ -70,58 +70,62 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               Gestão Distribuidora
             </Text>
           </Group>
+          <Flex align="center" gap={8}>
 
-          {/* Lado Direito: Menu do Usuário */}
-          <Menu shadow="md" width={200} position="bottom-end" transitionProps={{ transition: 'pop-top-right' }}>
-            <Menu.Target>
-              <UnstyledButton>
-                <Group gap={7}>
-                  <Avatar radius="xl" size={34} color="blue" alt={user?.name}>
-                    {user?.name?.charAt(0).toUpperCase() || 'U'}
-                  </Avatar>
+            {/* Lado Direito: Menu do Usuário */}
+            <Menu shadow="md" width={200} position="bottom-end" transitionProps={{ transition: 'pop-top-right' }}>
+              <Menu.Target>
+                <UnstyledButton>
+                  <Group gap={7}>
+                    <Avatar radius="xl" size={34} color="blue" alt={user?.name}>
+                      {user?.name?.charAt(0).toUpperCase() || 'U'}
+                    </Avatar>
 
-                  <div style={{ flex: 1 }}>
-                    <Text size="sm" fw={500} lh={1} mr={3}>
-                      {user?.name || 'Carregando...'}
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      {user?.role || ''}
-                    </Text>
-                  </div>
+                    <div style={{ flex: 1 }}>
+                      <Text size="sm" fw={500} lh={1} mr={3}>
+                        {user?.name || 'Carregando...'}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {user?.role || ''}
+                      </Text>
+                    </div>
 
-                  <IconChevronDown style={{ width: rem(12), height: rem(12) }} stroke={1.5} />
-                </Group>
-              </UnstyledButton>
-            </Menu.Target>
+                    <IconChevronDown style={{ width: rem(12), height: rem(12) }} stroke={1.5} />
+                  </Group>
+                </UnstyledButton>
+              </Menu.Target>
 
-            <Menu.Dropdown>
-              <Menu.Label>Minha Conta</Menu.Label>
+              <Menu.Dropdown>
+                <Menu.Label>Minha Conta</Menu.Label>
 
-              <Menu.Item
-                component='a'
-                href="/user"
-                leftSection={<IconSettings style={{ width: rem(14), height: rem(14) }} />}>
-                Meus Dados
-              </Menu.Item>
-
-              {/* Se for OWNER, pode ter um atalho para Assinatura aqui */}
-              {user?.role === 'OWNER' && (
-                <Menu.Item leftSection={<IconSettings style={{ width: rem(14), height: rem(14) }} />}>
-                  Assinatura
+                <Menu.Item
+                  component='a'
+                  href="/user"
+                  leftSection={<IconSettings style={{ width: rem(14), height: rem(14) }} />}>
+                  Meus Dados
                 </Menu.Item>
-              )}
 
-              <Menu.Divider />
+                {/* Se for OWNER, pode ter um atalho para Assinatura aqui */}
+                {user?.role === 'OWNER' && (
+                  <Menu.Item leftSection={<IconSettings style={{ width: rem(14), height: rem(14) }} />}>
+                    Assinatura
+                  </Menu.Item>
+                )}
 
-              <Menu.Item
-                color="red"
-                leftSection={<IconLogout style={{ width: rem(14), height: rem(14) }} />}
-                onClick={handleLogout}
-              >
-                Sair
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+                <Menu.Divider />
+
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconLogout style={{ width: rem(14), height: rem(14) }} />}
+                  onClick={handleLogout}
+                >
+                  Sair
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+            <NotificationBell />
+          </Flex>
+
 
         </Flex>
       </AppShell.Header>
@@ -131,20 +135,21 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <Flex direction="column" style={{ minHeight: '100%' }}>
+        <Flex direction="column" mb={60} style={{ minHeight: '100%' }}>
           {children}
         </Flex>
         <SubscriptionWizardModal />
       </AppShell.Main>
 
       <AppShell.Footer
-        p="md"
+        p="sm"
         style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           width: 'calc(100% - 300px)',
-          left: 300
+          left: 300,
+          height: 70,
         }}
       >
         <Flex align="center" gap={10}>

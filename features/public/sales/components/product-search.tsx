@@ -5,7 +5,7 @@ import { notifications } from '@mantine/notifications';
 
 import { useCartStore } from '../stores/use-cart-store';
 import { IconSearch } from '@tabler/icons-react';
-import { getProducts } from '../../products/product-service';
+import { getSellableProducts } from '../../products/product-service';
 
 export function ProductSearch() {
   const { priceListId, addItem } = useCartStore();
@@ -13,7 +13,7 @@ export function ProductSearch() {
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: getProducts,
+    queryFn: getSellableProducts,
   });
 
   const handleProductSelect = (productId: string | null) => {
@@ -63,7 +63,8 @@ export function ProductSearch() {
     label: p.name,
     sku: p.sku,
     image: p.images?.[0]?.url,
-    stock: p.stock?.quantity || 0 // Assumindo que o service retorna stock objeto
+    stock: p.totalStock || 0,
+    matrixStock: p.matrixStock
   }));
 
   return (
@@ -86,8 +87,13 @@ export function ProductSearch() {
             <Text size="sm" fw={500}>{(option as any).label}</Text>
             <Text size="xs" c="dimmed">SKU: {(option as any).sku}</Text>
           </div>
-          <Badge variant="light" color={(option as any).stock > 0 ? 'green' : 'red'}>
-            {(option as any).stock} un
+
+          <Badge variant="light" radius='xs' color={(option as any).stock > 0 ? 'green' : 'red'}>
+            Estoque {(option as any).stock === 0 ? 'Esgotado' : `${(option as any).stock} un`}
+          </Badge>
+
+          <Badge variant="light" radius='xs' color={(option as any).matrixStock > 0 ? 'green' : 'red'}>
+            Matrix {(option as any).matrixStock} un
           </Badge>
         </Group>
       )}

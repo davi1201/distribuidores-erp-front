@@ -13,7 +13,12 @@ import {
   IconPackages,
   IconPlus,
   IconCashRegister,
-  IconPackage
+  IconPackage,
+  IconFile,
+  IconFileDownloadFilled,
+  IconFileCheck,
+  IconFileTypeXml,
+  IconFileDownload
 } from '@tabler/icons-react';
 
 export type UserRole = 'SUPER_ADMIN' | 'OWNER' | 'ADMIN' | 'SELLER' | 'SUPPORT';
@@ -32,6 +37,7 @@ export const MENU_ITEMS: MenuItem[] = [
     href: '/dashboard',
     icon: IconDashboard,
   },
+  { label: 'Produtos', href: '/registrations/products', icon: IconShoppingBag, allowedRoles: ['SELLER'] },
   {
     label: 'Vendas',
     icon: IconCreditCard,
@@ -44,7 +50,7 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: IconPackages,
     allowedRoles: ['OWNER', 'ADMIN', 'SELLER'],
     links: [
-      { label: 'Gerenciar depósitos', href: '/registrations/stock', icon: IconPackage, allowedRoles: ['OWNER', 'ADMIN', 'SELLER'] },
+      { label: 'Depósitos e transferências', href: '/registrations/stock', icon: IconPackage, allowedRoles: ['OWNER', 'ADMIN', 'SELLER'] },
     ]
   },
   {
@@ -53,6 +59,7 @@ export const MENU_ITEMS: MenuItem[] = [
     allowedRoles: ['OWNER', 'ADMIN', 'SELLER'],
     links: [
       { label: 'Clientes', href: '/registrations/clients', icon: IconUsers, allowedRoles: ['OWNER', 'ADMIN', 'SELLER'] },
+      { label: 'Fornecedores', href: '/registrations/suppliers', icon: IconTruckDelivery, allowedRoles: ['OWNER', 'ADMIN'] },
       { label: 'Produtos', href: '/registrations/products', icon: IconShoppingBag, allowedRoles: ['OWNER', 'ADMIN'] },
       { label: 'Listas de Preço', href: '/registrations/price-lists', icon: IconCurrencyReal, allowedRoles: ['OWNER', 'ADMIN'] }, // Vendedor não edita tabela
       { label: 'Taxas e Impostos', href: '/registrations/tax-profiles', icon: IconPercentage, allowedRoles: ['OWNER', 'ADMIN'] },
@@ -68,6 +75,15 @@ export const MENU_ITEMS: MenuItem[] = [
     ]
   },
   {
+    label: 'NFE',
+    href: '/backoffice/reports',
+    icon: IconFileTypeXml,
+    allowedRoles: ['OWNER', 'ADMIN'],
+    links: [
+      { label: 'Importar notas', href: '/nfe/inbox', icon: IconFileDownload },
+    ]
+  },
+  {
     label: 'Relatórios',
     href: '/backoffice/reports',
     icon: IconChartBar,
@@ -78,7 +94,7 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: IconSettings,
     allowedRoles: ['OWNER', 'ADMIN', 'SUPER_ADMIN'],
     links: [
-      { label: 'Equipe / Vendedores', href: '/settings/team', icon: IconUsers },
+      { label: 'Equipe / Representantes', href: '/settings/team', icon: IconUsers },
       { label: 'Assinatura', href: '/settings/subscription', icon: IconSettings },
     ]
   },
