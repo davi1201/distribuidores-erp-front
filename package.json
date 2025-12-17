@@ -20,6 +20,8 @@
     "storybook:build": "storybook build"
   },
   "dependencies": {
+    "@clerk/localizations": "^3.30.1",
+    "@clerk/nextjs": "^6.36.2",
     "@mantine/charts": "^8.3.9",
     "@mantine/core": "8.3.9",
     "@mantine/dates": "^8.3.9",
@@ -28,6 +30,8 @@
     "@mantine/hooks": "8.3.9",
     "@mantine/notifications": "^8.3.9",
     "@next/bundle-analyzer": "^16.0.0",
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.5.3",
     "@tabler/icons-react": "^3.35.0",
     "@tanstack/react-query": "^5.90.11",
     "@tanstack/react-table": "^8.21.3",

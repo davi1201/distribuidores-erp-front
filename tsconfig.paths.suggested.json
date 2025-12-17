@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/client/*": ["./src/features/client/*"],
+      "@/admin/*": ["./src/features/admin/*"],
+      "@/shared/*": ["./src/shared/*"],
+      "@/components/*": ["./src/shared/components/*"],
+      "@/hooks/*": ["./src/shared/hooks/*"],
+      "@/utils/*": ["./src/shared/utils/*"],
+      "@/types/*": ["./src/shared/types/*"],
+      "@/lib/*": ["./src/lib/*"]
+    }
+  }
+}

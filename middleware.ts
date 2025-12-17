@@ -1,108 +1,68 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { jwtDecode } from 'jwt-decode';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-// 1. Rotas que NÃO exigem autenticação (Área Pública)
-const publicRoutes = [
-  '/', 
-  '/login', 
-  '/register',
-  '/invite',
-  '/forgot-password', 
-  '/auth/callback'
-];
+// 1. Rotas Públicas (Nenhuma auth necessária)
+const isPublicRoute = createRouteMatcher([
+  // '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/invite(.*)',
+  '/forgot-password(.*)',
+  '/api/webhooks(.*)',
+]);
 
-// 2. Rotas que SÓ usuários NÃO logados podem acessar (Auth Routes)
-const authRoutes = ['/login', '/register', '/forgot-password'];
+// 2. Rotas de Autenticação (Só para quem NÃO está logado)
+const isAuthRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)', '/login', '/register']);
 
-// 3. Configuração do Backoffice
-const protectedPrefix = '/backoffice';
-// Quem pode entrar no "Muro" do Backoffice?
-const backofficeRoles = ['SUPER_ADMIN', 'SUPPORT']; 
+// 3. Rotas do Backoffice
+const isBackofficeRoute = createRouteMatcher(['/backoffice(.*)']);
 
-// 4. Permissões granulares (Opcional)
-const routePermissions: Record<string, string[]> = {
-  // '/backoffice/financial': ['SUPER_ADMIN'], 
-};
+// Roles que têm acesso ao "Muro" do Backoffice
+const BACKOFFICE_ROLES = ['SUPER_ADMIN', 'SUPPORT'];
 
-interface UserToken {
-  role: string;
-  exp: number;
-  tenantId: string;
-}
+export default clerkMiddleware(async (auth, req) => {
+  // Obtém o objeto de autenticação uma única vez
+  const authObj = await auth();
+  const { userId, sessionClaims } = authObj;
 
-export default function middleware(request: NextRequest) {
-  const token = request.cookies.get('access_token')?.value;
-  const { pathname } = request.nextUrl;
+  // Extrai a role do metadata do Clerk
+  const role = sessionClaims?.metadata?.role;
 
-  // --- CENÁRIO A: USUÁRIO NÃO LOGADO ---
-  if (!token) {
-    if (publicRoutes.includes(pathname)) {
-      return NextResponse.next();
+  // --- CENÁRIO A: USUÁRIO JÁ LOGADO TENTANDO ACESSAR LOGIN/REGISTER ---
+  if (userId && isAuthRoute(req)) {
+    if (role && BACKOFFICE_ROLES.includes(role)) {
+      return NextResponse.redirect(new URL('/backoffice/dashboard', req.url));
     }
-
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
-  // --- CENÁRIO B: USUÁRIO LOGADO ---
-  try {
-    const decoded = jwtDecode<UserToken>(token);
-    const currentTime = Date.now() / 1000;
-
-    // 1. Validação de Token
-    if (decoded.exp < currentTime) {
-      const response = NextResponse.redirect(new URL('/login', request.url));
-      response.cookies.delete('access_token');
-      return response;
+  // --- CENÁRIO B: ROTAS PROTEGIDAS ---
+  if (!isPublicRoute(req)) {
+    // 1. Força login se não estiver logado
+    if (!userId) {
+      // Usa redirectToSignIn do objeto authObj existente
+      return authObj.redirectToSignIn({ returnBackUrl: req.url });
     }
 
-    // 2. Redirecionamento Inteligente de Login (Se tentar acessar /login logado)
-    if (authRoutes.includes(pathname)) {
-      if (backofficeRoles.includes(decoded.role)) {
-        return NextResponse.redirect(new URL('/backoffice/dashboard', request.url));
-      }
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-
-    // 3. PROTEÇÃO DO BACKOFFICE (Quem NÃO é admin tenta entrar)
-    if (pathname.startsWith(protectedPrefix)) {
-      if (!backofficeRoles.includes(decoded.role)) {
-        // Chuta usuário comum para o dashboard dele
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-
-      // Verificações granulares dentro do backoffice
-      const restrictedRouteKey = Object.keys(routePermissions).find(route => 
-        pathname.startsWith(route)
-      );
-      if (restrictedRouteKey) {
-        const allowedRoles = routePermissions[restrictedRouteKey];
-        if (!allowedRoles.includes(decoded.role)) {
-           return NextResponse.redirect(new URL('/backoffice/dashboard', request.url));
-        }
+    // 2. PROTEÇÃO DO BACKOFFICE (Quem NÃO é admin tenta entrar)
+    if (isBackofficeRoute(req)) {
+      if (!role || !BACKOFFICE_ROLES.includes(role)) {
+        return NextResponse.redirect(new URL('/dashboard', req.url));
       }
     }
-    
-    // 4. PROTEÇÃO DO DASHBOARD (Quem É admin tenta sair)
-    // Se a rota NÃO é do backoffice E NÃO é pública -> Admin não deve estar aqui
-    else if (!publicRoutes.includes(pathname)) {
-       if (backofficeRoles.includes(decoded.role)) {
-          // Chuta o admin de volta para o backoffice
-          return NextResponse.redirect(new URL('/backoffice/dashboard', request.url));
-       }
-    }
 
-  } catch (error) {
-    const response = NextResponse.redirect(new URL('/login', request.url));
-    response.cookies.delete('access_token');
-    return response;
+    // 3. PROTEÇÃO DO DASHBOARD (Quem É admin tenta sair para área comum)
+    else {
+      if (role && BACKOFFICE_ROLES.includes(role)) {
+        return NextResponse.redirect(new URL('/backoffice/dashboard', req.url));
+      }
+    }
   }
-
-  return NextResponse.next();
-}
+});
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|public|.*\\.png$).*)'],
+  matcher: [
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
+  ],
 };

@@ -16,8 +16,8 @@ import { IconLogout, IconSettings, IconChevronDown } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 
 // Importe o seu Store
-import { useAuthStore } from '@/store/auth/use-auth';
-import BackofficeNavBar from '@/components/ui/navbar/backoffice-navbar';
+import { useAuthStore } from '../../store/auth/use-auth';
+import BackofficeNavBar from '../../src/shared/components/ui/navbar/backoffice-navbar';
 
 export default function BackofficeLayout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();

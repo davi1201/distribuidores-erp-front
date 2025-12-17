@@ -18,7 +18,8 @@ import {
   IconFileDownloadFilled,
   IconFileCheck,
   IconFileTypeXml,
-  IconFileDownload
+  IconFileDownload,
+  IconHistory
 } from '@tabler/icons-react';
 
 export type UserRole = 'SUPER_ADMIN' | 'OWNER' | 'ADMIN' | 'SELLER' | 'SUPPORT';
@@ -34,23 +35,32 @@ export interface MenuItem {
 export const MENU_ITEMS: MenuItem[] = [
   {
     label: 'Dashboard',
-    href: '/dashboard',
+    href: '/dashboard', // Mapeia para (dashboard)/dashboard/page.tsx
     icon: IconDashboard,
   },
-  { label: 'Produtos', href: '/registrations/products', icon: IconShoppingBag, allowedRoles: ['SELLER'] },
+  {
+    label: 'Catálogo',
+    href: '/catalog/products', // Acesso rápido ao catálogo
+    icon: IconShoppingBag,
+    allowedRoles: ['SELLER']
+  },
   {
     label: 'Vendas',
     icon: IconCreditCard,
-    href: '/registrations/sales', // Pode ser direto ou ter submenus
+    href: '/sales', // PDV (Ponto de Venda)
     allowedRoles: ['OWNER', 'ADMIN', 'SELLER'],
+    links: [
+      { label: 'Nova Venda (PDV)', href: '/sales', icon: IconCashRegister },
+      { label: 'Histórico de Pedidos', href: '/sales/orders', icon: IconHistory },
+    ]
   },
   {
     label: 'Estoque',
-    href: '/registrations/stock',
     icon: IconPackages,
     allowedRoles: ['OWNER', 'ADMIN', 'SELLER'],
     links: [
-      { label: 'Depósitos e transferências', href: '/registrations/stock', icon: IconPackage, allowedRoles: ['OWNER', 'ADMIN', 'SELLER'] },
+      { label: 'Movimentações', href: '/inventory/stock', icon: IconPackage },
+      { label: 'Fornecedores', href: '/inventory/suppliers', icon: IconTruckDelivery, allowedRoles: ['OWNER', 'ADMIN'] },
     ]
   },
   {
@@ -58,34 +68,35 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: IconPlus,
     allowedRoles: ['OWNER', 'ADMIN', 'SELLER'],
     links: [
-      { label: 'Clientes', href: '/registrations/clients', icon: IconUsers, allowedRoles: ['OWNER', 'ADMIN', 'SELLER'] },
-      { label: 'Fornecedores', href: '/registrations/suppliers', icon: IconTruckDelivery, allowedRoles: ['OWNER', 'ADMIN'] },
-      { label: 'Produtos', href: '/registrations/products', icon: IconShoppingBag, allowedRoles: ['OWNER', 'ADMIN'] },
-      { label: 'Listas de Preço', href: '/registrations/price-lists', icon: IconCurrencyReal, allowedRoles: ['OWNER', 'ADMIN'] }, // Vendedor não edita tabela
-      { label: 'Taxas e Impostos', href: '/registrations/tax-profiles', icon: IconPercentage, allowedRoles: ['OWNER', 'ADMIN'] },
+      { label: 'Clientes', href: '/crm/clients', icon: IconUsers },
+      { label: 'Produtos', href: '/catalog/products', icon: IconShoppingBag, allowedRoles: ['OWNER', 'ADMIN'] },
+      { label: 'Categorias', href: '/catalog/categories', icon: IconBox, allowedRoles: ['OWNER', 'ADMIN'] },
+      { label: 'Tabelas de Preço', href: '/catalog/price-lists', icon: IconCurrencyReal, allowedRoles: ['OWNER', 'ADMIN'] },
     ]
   },
   {
     label: 'Financeiro',
     icon: IconCashRegister,
-    allowedRoles: ['OWNER', 'ADMIN', 'SELLER'],
+    allowedRoles: ['OWNER', 'ADMIN'],
     links: [
-      { label: 'Contas a Receber', href: '/registrations/financial', icon: IconReceipt2, },
-      // Futuro: { label: 'Contas a Pagar', href: '/backoffice/payables', icon: ... }
+      { label: 'Contas a Receber', href: '/financial/receivables', icon: IconReceipt2 },
+      { label: 'Contas a Pagar', href: '/financial/payables', icon: IconReceipt2 }, // Ajuste o nome da pasta para 'payables' no futuro para padronizar
+      { label: 'Formas de Pagamento', href: '/financial/settings/payment-terms', icon: IconCreditCard },
+      { label: 'Perfis Fiscais', href: '/financial/settings/tax-profiles', icon: IconPercentage },
     ]
   },
   {
     label: 'NFE',
-    href: '/backoffice/reports',
     icon: IconFileTypeXml,
     allowedRoles: ['OWNER', 'ADMIN'],
     links: [
-      { label: 'Importar notas', href: '/nfe/inbox', icon: IconFileDownload },
+      { label: 'Importar XML', href: '/inventory/nfe/inbox', icon: IconFileDownload },
+      { label: 'Emitir Nota', href: '/inventory/nfe/emit', icon: IconFileCheck },
     ]
   },
   {
     label: 'Relatórios',
-    href: '/backoffice/reports',
+    href: '/backoffice/dashboard', // Ou crie uma rota especifica em (dashboard)/reports
     icon: IconChartBar,
     allowedRoles: ['OWNER', 'ADMIN'],
   },
@@ -94,8 +105,9 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: IconSettings,
     allowedRoles: ['OWNER', 'ADMIN', 'SUPER_ADMIN'],
     links: [
-      { label: 'Equipe / Representantes', href: '/settings/team', icon: IconUsers },
-      { label: 'Assinatura', href: '/settings/subscription', icon: IconSettings },
+      { label: 'Equipe', href: '/settings/team', icon: IconUsers },
+      { label: 'Assinatura', href: '/settings/billing', icon: IconSettings },
+      { label: 'Meu Perfil', href: '/settings/profile', icon: IconUsers },
     ]
   },
 ];

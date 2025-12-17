@@ -1,5 +1,4 @@
 'use client';
-
 import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 import { ReactNode, Suspense } from 'react';
 
@@ -8,6 +7,8 @@ interface ProgressBarProviderProps {
 }
 
 export function ProgressBarProvider({ children }: ProgressBarProviderProps) {
+
+
   return (
     <>
       {children}

@@ -16,7 +16,17 @@
     "jsx": "react-jsx",
     "incremental": true,
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/client/*": ["./src/features/client/*"],
+      "@/admin/*": ["./src/features/admin/*"],
+      "@/shared/*": ["./src/shared/*"],
+      "@/components/*": ["./src/shared/components/*"],
+      "@/hooks/*": ["./src/shared/hooks/*"],
+      "@/utils/*": ["./src/shared/utils/*"],
+      "@/types/*": ["./src/shared/types/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/store/*": ["./store/*"]
     },
     "plugins": [
       {
@@ -31,7 +41,8 @@
     ".storybook/preview.tsx",
     "next-env.d.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "src/features/client/customers/api/customers.apits"
   ],
   "exclude": ["node_modules"]
 }
