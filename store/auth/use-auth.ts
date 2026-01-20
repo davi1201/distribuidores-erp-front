@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import api from '@/lib/api'; // Sua instância do Axios configurada com withCredentials: true
-import { UserRole } from '@/types/auth'; // Seus tipos
+import { UserRole } from '../../types/auth';
 
 // Definição do Tipo de Usuário (O que o backend retorna)
 export interface User {
@@ -41,40 +41,37 @@ export interface User {
 interface AuthState {
   user: User | null;
   isLoading: boolean;
-  
+
   // Actions
   setUser: (user: User) => void;
   logout: () => Promise<void>;
-  checkAuth: () => Promise<void>; 
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      isLoading: true,      
+      isLoading: true,
       setUser: (user) => set({ user, isLoading: false }),
 
-      
       logout: async () => {
         set({ isLoading: true });
         try {
-          
-          await api.post('/auth/logout'); 
+          await api.post('/auth/logout');
         } catch (error) {
           console.error('Erro ao fazer logout no servidor', error);
         } finally {
-          set({ user: null, isLoading: false });          
+          set({ user: null, isLoading: false });
         }
       },
 
-      
       checkAuth: async () => {
         set({ isLoading: true });
-        try {      
+        try {
           const { data } = await api.get('/users/me');
           set({ user: data });
-        } catch (error) {      
+        } catch (error) {
           set({ user: null });
         } finally {
           set({ isLoading: false });
@@ -84,7 +81,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
-      
+
       partialize: (state) => ({ user: state.user }),
     }
   )

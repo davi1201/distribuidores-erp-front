@@ -115,7 +115,10 @@ export function FinancialPayableList() {
           <div>
             <Text size="sm" fw={500}>{row.original.titleNumber}</Text>
             <Text size="xs" c="dimmed">
-              {PAYMENT_METHOD_LABELS[row.original.paymentMethod || ''] ||
+
+              {
+                // @ts-ignore
+                PAYMENT_METHOD_LABELS[row.original.paymentMethod || ''] ||
                 row.original.paymentMethod}
             </Text>
           </div>
