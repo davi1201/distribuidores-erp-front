@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
   Group, NumberInput, ActionIcon, Text, Stack, Button,
-  SimpleGrid, Paper, Alert, ThemeIcon
+  SimpleGrid, Paper, Alert
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { IconTrash, IconPlus, IconAlertCircle, IconCalendar } from '@tabler/icons-react';
+import { IconTrash, IconPlus, IconAlertCircle } from '@tabler/icons-react';
 import { addDays } from 'date-fns';
-import { formatCurrency } from '@/utils/formatter';
+import { formatCurrency } from '@/utils/formatter'; // Certifique-se que este import existe ou use uma formatação simples
 
 export interface Installment {
   id: string;
@@ -24,28 +24,43 @@ interface InstallmentBuilderProps {
 export function InstallmentBuilder({ totalAmount, onChange }: InstallmentBuilderProps) {
   const [installments, setInstallments] = useState<Installment[]>([]);
 
-  // Inicializa com 1 parcela à vista (30 dias)
+  // Inicializa com 1 parcela à vista se estiver vazio
   useEffect(() => {
-    if (installments.length === 0) {
+    if (installments.length === 0 && totalAmount > 0) {
       generateSuggestion(1);
     }
   }, [totalAmount]);
 
-  // Gera sugestão padrão (30/60/90...)
-  const generateSuggestion = (count: number) => {
+  // --- LÓGICA CENTRAL DE CÁLCULO ---
+  const recalculateValues = (items: Installment[]) => {
+    const count = items.length;
+    if (count === 0) return [];
+
+    // Calcula valor base e o resto (centavos)
     const baseValue = Math.floor((totalAmount / count) * 100) / 100;
     const remainder = totalAmount - (baseValue * count);
 
-    const newInstallments: Installment[] = Array.from({ length: count }).map((_, index) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      number: index + 1,
-      dueDate: addDays(new Date(), (index + 1) * 30), // Padrão 30 dias
-      // Adiciona o centavo que sobra na primeira parcela
+    // Retorna nova lista com valores ajustados
+    return items.map((item, index) => ({
+      ...item,
+      number: index + 1, // Garante numeração sequencial correta (1, 2, 3...)
+      // Adiciona a diferença de centavos na primeira parcela
       amount: index === 0 ? baseValue + remainder : baseValue
     }));
+  };
 
-    setInstallments(newInstallments);
-    onChange(newInstallments);
+  // Gera sugestão do zero (resetando datas para 30/60/90)
+  const generateSuggestion = (count: number) => {
+    const tempInstallments: Installment[] = Array.from({ length: count }).map((_, index) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      number: index + 1,
+      dueDate: addDays(new Date(), (index + 1) * 30),
+      amount: 0 // Será calculado abaixo
+    }));
+
+    const finalInstallments = recalculateValues(tempInstallments);
+    setInstallments(finalInstallments);
+    onChange(finalInstallments);
   };
 
   const updateInstallment = (id: string, field: keyof Installment, value: any) => {
@@ -56,32 +71,43 @@ export function InstallmentBuilder({ totalAmount, onChange }: InstallmentBuilder
     onChange(updated);
   };
 
+  // --- ADICIONAR COM RECÁLCULO ---
   const addInstallment = () => {
     const lastDate = installments[installments.length - 1]?.dueDate || new Date();
+
+    // Cria a nova parcela
     const newInst: Installment = {
       id: Math.random().toString(36).substr(2, 9),
-      number: installments.length + 1,
-      dueDate: addDays(new Date(lastDate), 30),
-      amount: 0
+      number: installments.length + 1, // Temporário, será corrigido no recalculate
+      dueDate: addDays(new Date(lastDate), 30), // Pega a última data + 30 dias
+      amount: 0 // Valor temporário
     };
-    const updated = [...installments, newInst];
-    setInstallments(updated);
-    onChange(updated);
+
+    // Adiciona na lista e Recalcula tudo
+    const newList = [...installments, newInst];
+    const recalculatedList = recalculateValues(newList);
+
+    setInstallments(recalculatedList);
+    onChange(recalculatedList);
   };
 
+  // --- REMOVER COM RECÁLCULO ---
   const removeInstallment = (id: string) => {
-    const updated = installments.filter(i => i.id !== id).map((i, idx) => ({
-      ...i,
-      number: idx + 1 // Renumera
-    }));
-    setInstallments(updated);
-    onChange(updated);
+    // Filtra
+    const filtered = installments.filter(i => i.id !== id);
+
+    // Recalcula valores e renumera (1, 2, 3...)
+    const recalculatedList = recalculateValues(filtered);
+
+    setInstallments(recalculatedList);
+    onChange(recalculatedList);
   };
 
-  // Validação de Soma
+  // Validação de Soma (apenas visual, pois o recálculo garante a soma, exceto edição manual)
   const currentSum = installments.reduce((acc, i) => acc + Number(i.amount), 0);
   const difference = totalAmount - currentSum;
-  const isValid = Math.abs(difference) < 0.05; // Margem de erro de centavos
+  // Aumentei um pouco a tolerância para floating point issues, mas o cálculo manual resolve isso
+  const isValid = Math.abs(difference) < 0.05;
 
   return (
     <Stack>
@@ -96,7 +122,7 @@ export function InstallmentBuilder({ totalAmount, onChange }: InstallmentBuilder
 
       <Paper withBorder p="sm" bg="var(--mantine-color-default)">
         <Stack gap="xs">
-          {installments.map((inst, index) => (
+          {installments.map((inst) => (
             <SimpleGrid cols={12} key={inst.id} spacing="xs" style={{ alignItems: 'center' }}>
               <div style={{ gridColumn: 'span 1' }}>
                 <Text size="xs" ta="center" fw={700}>{inst.number}x</Text>
@@ -121,6 +147,7 @@ export function InstallmentBuilder({ totalAmount, onChange }: InstallmentBuilder
                   fixedDecimalScale
                   prefix="R$ "
                   size="xs"
+                  hideControls
                 />
               </div>
 
@@ -154,8 +181,8 @@ export function InstallmentBuilder({ totalAmount, onChange }: InstallmentBuilder
       {!isValid && (
         <Alert color="red" variant="light" icon={<IconAlertCircle size={16} />} py="xs">
           <Text size="xs">
-            A soma das parcelas ({formatCurrency(currentSum)}) difere do total ({formatCurrency(totalAmount)}).
-            Diferença: <b>{formatCurrency(difference)}</b>
+            A soma das parcelas ({currentSum.toFixed(2)}) difere do total ({totalAmount.toFixed(2)}).
+            Diferença: <b>{difference.toFixed(2)}</b>
           </Text>
         </Alert>
       )}

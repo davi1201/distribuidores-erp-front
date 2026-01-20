@@ -77,7 +77,7 @@ export function CustomerList() {
         header: 'Cliente',
         cell: ({ row }) => (
           <div>
-            <Text size="sm" fw={500}>{row.original.name}</Text>
+            <Text size="sm" fw={500}>{row.original.tradeName || row.original.name}</Text>
             <Text size="xs" c="dimmed">{row.original.email}</Text>
           </div>
         ),

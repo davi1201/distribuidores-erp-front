@@ -19,3 +19,8 @@ export const registerPayment = async (payload: RegisterPaymentPayload) => {
   const { data } = await api.post('/financial/movements', payload);
   return data;
 };
+
+export const getPaymentMethods = async (): Promise<any[]> => {
+  const { data } = await api.get('/financial/payment-methods');
+  return data;
+};

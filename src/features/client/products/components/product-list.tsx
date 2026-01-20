@@ -1,17 +1,18 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Image from 'next/image'; // 1. Importar Next Image
 import {
   Group, Text, ActionIcon, Menu, Badge, Button,
-  TextInput, Flex, Avatar, Tooltip, Stack, HoverCard,
-  Paper
+  TextInput, Avatar, Tooltip, Stack, HoverCard,
+  Paper, Modal, Center, Box,
+  Select,
+  Flex
 } from '@mantine/core';
 import {
-  IconDots, IconPencil, IconTrash, IconSearch, IconPlus, IconBox,
+  IconDots, IconTrash, IconSearch, IconPlus, IconBox,
   IconAlertTriangle, IconBarcode, IconTags, IconVersions,
-  IconEdit,
-  IconArrowsExchange,
-  IconEye
+  IconEdit, IconEye, IconFileCode, IconPhotoOff
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,18 +23,85 @@ import { getProducts, deleteProduct } from '../api/product.api';
 import { DataGrid } from '@/components/ui/data-grid/data-grid';
 import { ProductDetailsModal } from './product-details-modal';
 import { useAuthStore } from '@/store/auth/use-auth';
+import { NfeImportModal } from '../../nfe/components/nfe-import-modal';
+import { getPriceLists } from '../../price-lists/api/price-lists.api';
 
+// Componente auxiliar para renderizar a imagem com otimização e interações
+const ProductImageCell = ({ src, name, onClick }: { src?: string | null, name: string, onClick: (src: string) => void }) => {
+  if (!src) {
+    return (
+      <Avatar radius="sm" size="md" color="blue">
+        <IconBox size={20} />
+      </Avatar>
+    );
+  }
+
+  return (
+    <HoverCard width={220} shadow="md" withArrow openDelay={200} position="right">
+      <HoverCard.Target>
+        <Box
+          onClick={(e) => {
+            e.stopPropagation(); // Evita conflitos com clique na linha se houver
+            onClick(src);
+          }}
+          style={{
+            position: 'relative',
+            width: 38,
+            height: 38,
+            cursor: 'zoom-in',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            border: '1px solid #e5e7eb'
+          }}
+        >
+          {/* Imagem Thumbnail Otimizada */}
+          <Image
+            src={src}
+            alt={`Thumb ${name}`}
+            fill
+            sizes="40px"
+            style={{ objectFit: 'cover' }}
+          />
+        </Box>
+      </HoverCard.Target>
+      <HoverCard.Dropdown p="xs">
+        <Stack gap="xs" align="center">
+          <Text size="xs" c="dimmed">Clique para ampliar</Text>
+          <Box style={{ position: 'relative', width: 200, height: 200, borderRadius: '4px', overflow: 'hidden' }}>
+            {/* Imagem Hover Otimizada */}
+            <Image
+              src={src}
+              alt={`Preview ${name}`}
+              fill
+              sizes="200px"
+              style={{ objectFit: 'contain', backgroundColor: '#f8f9fa' }}
+            />
+          </Box>
+        </Stack>
+      </HoverCard.Dropdown>
+    </HoverCard>
+  );
+};
 
 export function ProductList() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [priceListSelected, setPriceListSelected] = useState<string | null>(null);
+
+  // Estados para modais
   const [detailsDrawerOpened, setDetailsDrawerOpened] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+
+  // Estado para visualização da imagem
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const openImport = () => setImportModalOpen(true);
+  const closeImport = () => setImportModalOpen(false);
 
   const { user } = useAuthStore();
   const IS_SELLER = user?.role === 'SELLER';
-
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
@@ -51,10 +119,25 @@ export function ProductList() {
     }
   });
 
+  const { data: priceLists = [] } = useQuery({
+    queryKey: ['price-lists'],
+    queryFn: async () => {
+      const data = await getPriceLists();
+      setPriceListSelected(data[0]?.id || null);
+      return data;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
   const handleDelete = (id: string) => {
     if (confirm('Deseja realmente excluir este produto?')) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleCloseImportModal = () => {
+    closeImport();
+    queryClient.invalidateQueries({ queryKey: ['products'] });
   };
 
   const filteredData = useMemo(() => {
@@ -76,15 +159,19 @@ export function ProductList() {
         minSize: 280,
         cell: ({ row }) => {
           const product = row.original;
-          const firstImage = product.imagesUrl
+          const firstImage = product.imageUrl; // Assumindo que imageUrl é a string da URL
           // @ts-ignore
           const isVariant = !!product.parentId;
 
           return (
             <Group gap="sm" wrap="nowrap">
-              <Avatar src={firstImage} radius="sm" size="md" color="blue">
-                <IconBox size={20} />
-              </Avatar>
+              {/* Uso do componente customizado de imagem */}
+              <ProductImageCell
+                src={firstImage}
+                name={product.name}
+                onClick={(src) => setPreviewImage(src)}
+              />
+
               <div>
                 <Group gap={6}>
                   {isVariant && <IconVersions size={14} style={{ opacity: 0.5 }} />}
@@ -130,10 +217,7 @@ export function ProductList() {
         minSize: 200,
         cell: ({ row }) => {
           const supplier = row.original.supplier || null;
-
-
           if (!supplier) return <Text size="xs" c="dimmed">Sem fornecedor</Text>;
-
           return (
             <div>
               <Text size="sm" fw={500} lineClamp={1}>{supplier?.name}</Text>
@@ -141,19 +225,6 @@ export function ProductList() {
           );
         }
       },
-      // {
-      //   header: 'Preço Venda',
-      //   id: 'sellingPrice',
-      //   size: 120,
-      //   cell: ({ row }) => {
-      //     const prices = row.original.prices || [];
-      //     const mainPrice = prices[0]?.price || 0;
-
-      //     if (mainPrice === 0) return <Text size="xs" c="dimmed">Não definido</Text>;
-
-      //     return <Text size="sm" fw={700} c="blue">{formatCurrency(Number(mainPrice))}</Text>;
-      //   }
-      // },
       {
         header: 'Estoque',
         accessorKey: 'inventory.total',
@@ -161,7 +232,6 @@ export function ProductList() {
         cell: ({ row }) => {
           const totalQty = Number(row.original.inventory.total || 0);
           const hasVariants = (row.original.variants?.length || 0) > 0;
-
           // @ts-ignore
           const stockItem = Array.isArray(row.original.stock) ? row.original.stock[0] : row.original.stock;
           const min = Number(stockItem?.minStock || 0);
@@ -172,7 +242,6 @@ export function ProductList() {
           else if (totalQty <= min) color = 'orange';
           else color = 'green';
 
-          // Se tiver variações, usamos HoverCard para mostrar o detalhe
           if (hasVariants) {
             return (
               <HoverCard width={260} shadow="md" withArrow position="right-start" openDelay={200}>
@@ -203,7 +272,6 @@ export function ProductList() {
                     {row.original.variants?.map((v: any, index: number) => {
                       // @ts-ignore
                       const vStock = Array.isArray(v.stock) ? v.stock[0] : v.stock;
-
                       return (
                         <Group
                           key={v.id}
@@ -244,6 +312,33 @@ export function ProductList() {
             </Group>
           );
         }
+      },
+      {
+        accessorKey: 'prices',
+        header: 'Preço de Venda',
+        size: 140,
+        cell: ({ getValue }) => {
+          // Pega o array de preços ou um array vazio para evitar erros
+          const prices = (getValue() as any[]) || [];
+
+          // Busca o preço compatível com a tabela selecionada
+          const priceObj = prices.find((p: any) => p.listId === priceListSelected);
+
+          // Valor a ser exibido
+          const priceValue = priceObj ? Number(priceObj.price) : 0;
+
+          return (
+            <Text size="sm" fw={500}>
+              {priceObj
+                ? priceValue.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })
+                : <Text span c="dimmed" size="xs">Sem preço</Text> // Fallback visual
+              }
+            </Text>
+          );
+        },
       },
       {
         accessorKey: 'isActive',
@@ -301,28 +396,46 @@ export function ProductList() {
         ),
       },
     ],
-    []
+    [priceListSelected, IS_SELLER, router]
   );
 
 
   return (
     <Stack gap="md">
       <Paper p="md" withBorder>
+
         <Group justify="space-between">
-          <TextInput
-            placeholder="Buscar por nome, SKU, EAN ou marca..."
-            leftSection={<IconSearch size={16} />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ flex: 1, maxWidth: 400 }}
-          />
+          <Flex gap="md" wrap="wrap" align="end" style={{ flex: 1 }}>
+            <Select
+              label="Tabelas de Preço"
+              data={priceLists.map((pl) => ({ value: pl.id, label: pl.name }))}
+              value={priceListSelected}
+              onChange={setPriceListSelected}
+              placeholder="Filtrar por tabela de preço"
+              searchable
+              style={{ width: 300 }}
+            />
+            <TextInput
+              placeholder="Buscar por nome, SKU, EAN ou marca..."
+              leftSection={<IconSearch size={16} />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ flex: 1, maxWidth: 400 }}
+            />
+          </Flex>
           {IS_SELLER === false && (
-            <Button
-              leftSection={<IconPlus size={18} />}
-              onClick={() => router.push('/catalog/products/create')}
-            >
-              Novo Produto
-            </Button>
+            <Group>
+              <Button
+                leftSection={<IconPlus size={18} />}
+                onClick={() => router.push('/catalog/products/create')}
+              >
+                Novo Produto
+              </Button>
+
+              <Button leftSection={<IconFileCode size={18} />} variant="default" onClick={openImport}>
+                Importar produtos
+              </Button>
+            </Group>
           )}
         </Group>
       </Paper>
@@ -338,6 +451,33 @@ export function ProductList() {
         // @ts-ignore
         product={selectedProduct}
       />
+
+      <NfeImportModal opened={importModalOpen} onClose={handleCloseImportModal} />
+
+      {/* Modal para Visualização da Imagem em Tamanho Grande */}
+      <Modal
+        opened={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+        size="lg" // ou 'auto' / 'xl'
+        centered
+        withCloseButton
+        title="Visualização do Produto"
+      >
+        <Center p="md" style={{ minHeight: 300 }}>
+          {previewImage && (
+            <Box style={{ position: 'relative', width: '100%', height: '500px' }}>
+              <Image
+                src={previewImage}
+                alt="Produto ampliado"
+                fill
+                sizes="100vw"
+                style={{ objectFit: 'contain' }}
+                priority // Carrega com prioridade pois é um modal
+              />
+            </Box>
+          )}
+        </Center>
+      </Modal>
     </Stack>
   );
 }

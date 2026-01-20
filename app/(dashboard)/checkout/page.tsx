@@ -3,7 +3,8 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button, Container, Center, Loader, Text, Stack } from '@mantine/core';
 import { Suspense } from 'react';
-import { StripeCheckout } from '@/features/app/checkout/checkout';
+import { StripeCheckout } from '@/features/client/checkout';
+
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -16,7 +17,7 @@ function CheckoutContent() {
       <Center h={400}>
         <Stack align="center">
           <Text>Nenhum plano selecionado.</Text>
-          <Button onClick={() => router.push('/billing')}>Voltar para Planos</Button>
+          <Button onClick={() => router.push('/settings/billing')}>Voltar para Planos</Button>
         </Stack>
       </Center>
     );

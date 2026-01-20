@@ -45,6 +45,7 @@ import api from '@/lib/api';
 import { formatDocumentNumber, formatPhoneNumber } from '@/utils/formatter';
 import { AddressFormFields } from '@/components/ui/forms/address-form-fields';
 import { TenantEmailConfigForm } from '../../tenant/components/tenant-email-config-form';
+import { SubscriptionCard } from '../../checkout/components/subscription-card';
 
 export function UserAccountDisplay() {
   const { user, setUser } = useAuthStore();
@@ -346,72 +347,10 @@ export function UserAccountDisplay() {
         </Grid.Col>
 
         {/* 3. ASSINATURA */}
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Card
-            withBorder
-            radius="md"
-            p="md"
-            h="100%"
-            style={{ borderColor: isTrial ? 'bg="var(--mantine-color-default)"' : undefined }}
-          >
-            <Card.Section withBorder inheritPadding py="xs" bg={isTrial ? 'blue.0' : isActive ? 'green.0' : 'gray.0'}>
-              <Group justify="space-between">
-                <Group gap="xs">
-                  <IconCrown size={18} color={isTrial ? '#228be6' : isActive ? 'green' : 'gray'} />
-                  <Text fw={600} size="sm" c={isTrial ? 'blue.9' : isActive ? 'green.9' : 'gray.9'}>
-                    Plano Atual
-                  </Text>
-                </Group>
-                <Badge color={statusColor} variant="filled">{statusLabel}</Badge>
-              </Group>
-            </Card.Section>
-
-            <Stack mt="md" gap="sm">
-              <Group align="flex-end" justify="space-between">
-                <div>
-                  <Text size="xs" c="dimmed" tt="uppercase" fw={700}>Pacote</Text>
-                  <Text size="xl" fw={800} lh={1} tt="uppercase" c="dark">
-                    {displayPlanName}
-                  </Text>
-                </div>
-              </Group>
-
-              {isActive && (
-                <Group gap={6}>
-                  <IconCreditCard size={16} color="gray" />
-                  <Text size="sm" c="dimmed">
-                    Ciclo: {user.billingCycle === 'monthly' ? 'Mensal' : 'Anual'}
-                  </Text>
-                </Group>
-              )}
-
-              <Divider />
-
-              <Group>
-                <ThemeIcon variant="light" color={statusColor}><IconCalendar size={18} /></ThemeIcon>
-                <div>
-                  <Text size="sm" fw={500}>{dateLabel}</Text>
-                  <Text size="sm" c="dimmed">
-                    {formatDate(relevantDate)}
-                  </Text>
-                </div>
-              </Group>
-
-              <Button
-                fullWidth
-                mt="md"
-                size="md"
-                variant={isActive ? 'outline' : 'gradient'}
-                gradient={{ from: 'blue', to: 'cyan', deg: 90 }}
-                leftSection={!isActive && <IconCreditCard size={18} />}
-                onClick={() => router.push('/settings/subscription')}
-              >
-                {isActive ? 'Gerenciar Assinatura / Upgrade' : 'Assinar Agora'}
-              </Button>
-            </Stack>
-          </Card>
-        </Grid.Col>
+        <SubscriptionCard />
       </Grid>
+
+      {/* 4. CONFIGURAÇÕES DE EMAIL */}
       <TenantEmailConfigForm />
     </Stack>
   );

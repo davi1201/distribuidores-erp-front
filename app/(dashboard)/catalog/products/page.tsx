@@ -10,7 +10,7 @@ export default function ProductsPage() {
         title="Produtos"
         description="Gerencie seu catálogo, preços e estoque."
         breadcrumbs={[
-          { title: 'Dashboard', href: '/dashboard' },
+          { title: 'Dashboard', href: '/' },
           { title: 'Produtos', href: '/products' },
         ]}
       />

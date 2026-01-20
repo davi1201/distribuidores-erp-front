@@ -14,6 +14,7 @@ import { addDays, format } from 'date-fns';
 import api from '@/lib/api';
 import { formatCurrency } from '@/utils/formatter';
 import { InstallmentBuilder, Installment } from './installment-builder';
+import { usePaymentMethods } from '../../financial/hooks/use-financial';
 
 interface PaymentTerm {
   id: string;
@@ -57,15 +58,7 @@ export function PaymentModal({ opened, onClose, totalAmount, onConfirm, loading 
   // FIX: Garante que 'terms' seja estável (mesma referência) quando data é undefined
   const terms = termsData || EMPTY_ARRAY;
 
-  // Carrega Métodos de Pagamento
-  const { data: methodsData, isLoading: loadingMethods } = useQuery({
-    queryKey: ['payment-methods'],
-    queryFn: async () => {
-      const res = await api.get('/financial/payment-methods');
-      return res.data as PaymentMethod[];
-    },
-    enabled: opened,
-  });
+  const { data: methodsData, isLoading: loadingMethods } = usePaymentMethods();
 
   const methods = methodsData || EMPTY_ARRAY;
 
@@ -126,9 +119,8 @@ export function PaymentModal({ opened, onClose, totalAmount, onConfirm, loading 
   const handleConfirm = () => {
     const payload = {
       paymentTermId: selectedTermId,
-      paymentMethod: selectedMethod,
+      paymentMethodId: selectedMethod,
       totalAmount,
-      // Se for flexível, envia o plano manual
       installmentsPlan: isFlexible
         ? manualInstallments.map(i => ({
           //@ts-ignore
@@ -169,7 +161,7 @@ export function PaymentModal({ opened, onClose, totalAmount, onConfirm, loading 
           <Select
             label="Forma de Pagamento"
             placeholder="Selecione..."
-            data={methods.map((m: PaymentMethod) => ({ value: m.name, label: m.name }))}
+            data={methods.map((m: PaymentMethod) => ({ value: m.id, label: m.name }))}
             value={selectedMethod}
             onChange={setSelectedMethod}
             disabled={loadingMethods}

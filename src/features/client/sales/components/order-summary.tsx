@@ -11,6 +11,7 @@ import { useCartStore } from '../stores/use-cart-store';
 import { PaymentModal } from './payment-modal';
 
 interface PaymentModalData {
+  paymentMethodId: any;
   paymentTermId?: string | null;
   paymentMethod?: string | null;
   installmentsPlan?: any[]; // Plano manual (opcional)
@@ -46,7 +47,7 @@ export function OrderSummary() {
 
         // --- NOVOS CAMPOS FINANCEIROS ---
         // Envia exatamente o que o PaymentModal preparou e o Backend espera
-        paymentMethod: paymentData.paymentMethod, // Ex: 'BOLETO', 'PIX'
+        paymentMethod: paymentData.paymentMethodId, // Ex: 'BOLETO', 'PIX'
         paymentTermId: paymentData.paymentTermId, // ID da condição (se fixa)
         installmentsPlan: paymentData.installmentsPlan, // Array manual (se flexível)
 
@@ -57,6 +58,10 @@ export function OrderSummary() {
           discount: i.discount || 0,
         })),
       };
+
+      // console.log(paymentData);
+      // return
+
 
       const { data } = await api.post('/sales', payload);
       return data;

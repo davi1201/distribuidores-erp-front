@@ -23,6 +23,7 @@ import { formatDateOnlyBR } from '../../src/shared/utils/formatter';
 import { SubscriptionWizardModal } from '../../src/shared/components/subscription/subscription-wizard';
 import { useAppStore } from '../../store/app/use-app-store';
 import { NotificationBell } from '../../src/shared/components/page-header/notification-bell';
+import { useClerk } from '@clerk/nextjs';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
@@ -30,13 +31,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   // Hooks de Auth
   const router = useRouter();
   const { user, logout } = useAuthStore();
-
-  const { openSubscriptionWizard } = useAppStore()
+  const { signOut } = useClerk();
 
 
   const handleLogout = async () => {
-    await logout();
-    router.push('/login');
+    await signOut(() => router.push('/sign-in'));
   };
 
   return (
@@ -77,7 +76,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <Menu.Target>
                 <UnstyledButton>
                   <Group gap={7}>
-                    <Avatar radius="xl" size={34} color="blue" alt={user?.name}>
+                    <Avatar src={user?.avatarUrl} radius="xl" size={34} color="blue" alt={user?.name}>
                       {user?.name?.charAt(0).toUpperCase() || 'U'}
                     </Avatar>
 
@@ -156,7 +155,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Text fw={500} size="sm" c="dimmed">
             {user?.isTrialExpired ? 'Sua período de teste terminou em: ' : 'Seu período de teste termina em: '} {formatDateOnlyBR(user?.trialEndsAt ?? '')}
           </Text>
-          <Button size='sm' variant='light' onClick={openSubscriptionWizard}>
+          <Button size='sm' variant='light' onClick={() => router.push('/checkout')}>
             Fazer Upgrade
           </Button>
         </Flex>

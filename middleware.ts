@@ -33,7 +33,7 @@ export default clerkMiddleware(async (auth, req) => {
     if (role && BACKOFFICE_ROLES.includes(role)) {
       return NextResponse.redirect(new URL('/backoffice/dashboard', req.url));
     }
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL('/', req.url));
   }
 
   // --- CENÁRIO B: ROTAS PROTEGIDAS ---
@@ -47,7 +47,7 @@ export default clerkMiddleware(async (auth, req) => {
     // 2. PROTEÇÃO DO BACKOFFICE (Quem NÃO é admin tenta entrar)
     if (isBackofficeRoute(req)) {
       if (!role || !BACKOFFICE_ROLES.includes(role)) {
-        return NextResponse.redirect(new URL('/dashboard', req.url));
+        return NextResponse.redirect(new URL('/', req.url));
       }
     }
 

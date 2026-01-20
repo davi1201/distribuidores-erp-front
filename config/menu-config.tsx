@@ -35,7 +35,7 @@ export interface MenuItem {
 export const MENU_ITEMS: MenuItem[] = [
   {
     label: 'Dashboard',
-    href: '/dashboard', // Mapeia para (dashboard)/dashboard/page.tsx
+    href: '/', // Mapeia para (dashboard)/dashboard/page.tsx
     icon: IconDashboard,
   },
   {
@@ -52,6 +52,7 @@ export const MENU_ITEMS: MenuItem[] = [
     links: [
       { label: 'Nova Venda (PDV)', href: '/sales', icon: IconCashRegister },
       { label: 'Histórico de Pedidos', href: '/sales/orders', icon: IconHistory },
+      { label: 'Comissões', href: '/sales/commissions', icon: IconCurrencyReal, allowedRoles: ['OWNER', 'ADMIN'] },
     ]
   },
   {
@@ -81,7 +82,7 @@ export const MENU_ITEMS: MenuItem[] = [
     links: [
       { label: 'Contas a Receber', href: '/financial/receivables', icon: IconReceipt2 },
       { label: 'Contas a Pagar', href: '/financial/payables', icon: IconReceipt2 }, // Ajuste o nome da pasta para 'payables' no futuro para padronizar
-      { label: 'Formas de Pagamento', href: '/financial/settings/payment-terms', icon: IconCreditCard },
+      { label: 'Condições de Pagamento', href: '/financial/settings/payment-terms', icon: IconCreditCard },
       { label: 'Perfis Fiscais', href: '/financial/settings/tax-profiles', icon: IconPercentage },
     ]
   },
@@ -108,6 +109,7 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: 'Equipe', href: '/settings/team', icon: IconUsers },
       { label: 'Assinatura', href: '/settings/billing', icon: IconSettings },
       { label: 'Meu Perfil', href: '/settings/profile', icon: IconUsers },
+      { label: 'Comissões', href: '/settings/commissions', icon: IconFile },
     ]
   },
 ];

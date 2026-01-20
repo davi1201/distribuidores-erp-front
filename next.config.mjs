@@ -9,4 +9,14 @@ export default withBundleAnalyzer({
   experimental: {
     optimizePackageImports: ['@mantine/core', '@mantine/hooks'],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '**', // Permite todos os caminhos
+      },
+      // Se tiver outros domínios, adicione aqui
+    ],
+  },
 });

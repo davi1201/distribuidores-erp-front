@@ -15,12 +15,18 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 
 export default function StripeCheckout({ planSlug, cycle }: StripeCheckoutProps) {
   const [error, setError] = useState<string | null>(null);
+  const api = useApiClient();
 
   const fetchClientSecret = useCallback(async () => {
-    try {
-      const response = await getSecret({ planSlug, cycle });
 
-      return response.data.clientSecret;
+
+    try {
+      const { data } = await api.post('/payment/checkout', {
+        planSlug,
+        cycle
+      });
+
+      return data.clientSecret;
 
     } catch (err: any) {
       console.error("Erro no checkout:", err);

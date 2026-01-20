@@ -1,12 +1,24 @@
 import { Stack, Paper, Group, Text, SimpleGrid, Switch, Select, Divider, NumberInput, Checkbox } from '@mantine/core';
 import { IconReceiptTax } from '@tabler/icons-react';
 import { UseFormReturnType } from '@mantine/form';
+import { useQuery } from '@tanstack/react-query';
+import { getSellerByTenantId } from '@/features/client/user/api/users.api';
 
 interface SettingsPanelProps {
   form: UseFormReturnType<any>;
   priceLists: any[];
 }
 export function SettingsPanel({ form, priceLists }: SettingsPanelProps) {
+
+  const { data: sellerList = [] } = useQuery({
+    queryKey: ['sellers-list'],
+    queryFn: async () => {
+      const data = await getSellerByTenantId();
+      return data;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
   return (
     <Stack gap="lg" mt="md">
       <Paper withBorder p="md">
@@ -37,7 +49,7 @@ export function SettingsPanel({ form, priceLists }: SettingsPanelProps) {
           />
           <Select
             label="Vendedor Responsável"
-            data={['João Silva']}
+            data={sellerList.map(seller => ({ value: seller.id, label: seller.name }))}
             placeholder="Selecione"
             {...form.getInputProps('sellerId')}
           />

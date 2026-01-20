@@ -10,9 +10,7 @@ export function useApiClient() {
       baseURL: process.env.NEXT_PUBLIC_API_URL,
     });
 
-    // Interceptor para injetar o Token
     instance.interceptors.request.use(async (config) => {
-      // Pega o token JWT do Clerk (válido por 1 min, renova auto)
       const token = await getToken();
 
       if (token) {

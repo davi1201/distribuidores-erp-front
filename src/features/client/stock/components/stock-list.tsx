@@ -18,7 +18,7 @@ import { TransferRequestModal } from './modals/transfer-request-modal';
 import { WarehouseFormModal } from './modals/warehouse-form-modal';
 import { StockBalanceTab } from './tabs/stock-balance-tab';
 import { StockTransfersTab } from './tabs/stock-transfer-tab';
-import { NfeImportModal } from './modals/nfe-import-modal';
+import { NfeImportModal } from '../../nfe/components/nfe-import-modal';
 import { useSearchParams } from 'next/navigation';
 
 

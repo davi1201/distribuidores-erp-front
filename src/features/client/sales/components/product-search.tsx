@@ -34,7 +34,8 @@ export function ProductSearch() {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: getSellableProducts,
-    staleTime: 1000 * 60 * 5, // Cache de 5 minutos para evitar requests desnecessários
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   // 2. Preparação dos Dados (Memoizado para Performance)

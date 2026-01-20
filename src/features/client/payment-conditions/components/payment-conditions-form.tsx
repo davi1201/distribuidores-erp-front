@@ -153,7 +153,7 @@ export function PaymentConditionsForm({
         />
 
         {/* CONTROLE DE FLEXIBILIDADE */}
-        <Paper p="sm" bg="blue.0" withBorder style={{ borderColor: 'var(--mantine-color-blue-3)' }}>
+        <Paper p="sm" bg="var(--mantine-color-default)" withBorder style={{ borderColor: 'var(--mantine-color-green-3)' }}>
           <Group justify="space-between">
             <Group gap="xs">
               <Switch
@@ -175,10 +175,10 @@ export function PaymentConditionsForm({
         />
 
         {/* LISTA DE REGRAS DINÂMICAS */}
-        <Paper withBorder p="md" bg="gray.0">
+        <Paper withBorder p="md" bg="var(--mantine-color-default)">
           <Stack>
             {form.values.rules.map((item, index) => (
-              <Group key={index} align="flex-start">
+              <Group key={index} align="center">
                 <NumberInput
                   label={index === 0 ? 'Dias (Vencimento)' : undefined}
                   description={index === 0 ? '0 = À Vista / Entrada' : undefined}
@@ -207,11 +207,11 @@ export function PaymentConditionsForm({
                 <ActionIcon
                   color="red"
                   variant="subtle"
-                  mt={index === 0 ? 26 : 0}
+                  mt={index === 0 ? 40 : 0}
                   onClick={() => form.removeListItem('rules', index)}
                   disabled={form.values.rules.length === 1}
                 >
-                  <IconTrash size={18} />
+                  <IconTrash size={22} />
                 </ActionIcon>
               </Group>
             ))}

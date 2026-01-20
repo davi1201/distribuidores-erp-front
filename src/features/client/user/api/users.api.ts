@@ -10,3 +10,13 @@ export const updateUserPermissions = async (
   });
   return data;
 };
+
+export const getAllSellers = async (): Promise<User[]> => {
+  const { data } = await api.get('/users/sellers');
+  return data;
+};
+
+export const getSellerByTenantId = async (): Promise<User[]> => {
+  const { data } = await api.get('/users/sellers-by-tenant');
+  return data;
+};

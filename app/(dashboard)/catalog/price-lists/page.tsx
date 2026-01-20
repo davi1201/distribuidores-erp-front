@@ -5,8 +5,8 @@ import { PriceListList } from '@/features/client/price-lists';
 
 export default function Page() {
   const breadcrumbs = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Cadastros', href: '/dashboard' },
+    { title: 'Dashboard', href: '/' },
+    { title: 'Cadastros', href: '/' },
     { title: 'Tabelas de Preço', href: '/price-lists' },
   ];
 

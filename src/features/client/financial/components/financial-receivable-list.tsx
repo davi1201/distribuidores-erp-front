@@ -116,8 +116,8 @@ export function FinancialReceivableList() {
           <div>
             <Text size="sm" fw={500}>{row.original.titleNumber}</Text>
             <Text size="xs" c="dimmed">
-              {PAYMENT_METHOD_LABELS[row.original.paymentMethod || ''] ||
-                row.original.paymentMethod}
+              {PAYMENT_METHOD_LABELS[row.original.paymentMethod?.name || ''] ||
+                row.original.paymentMethod?.name}
             </Text>
           </div>
         )

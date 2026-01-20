@@ -109,7 +109,7 @@ export function DataGrid<T>({
               <Table.Tr
                 key={row.id}
                 onClick={() => onRowClicked && onRowClicked(row.original)}
-                style={{ cursor: useRowClicked ? 'pointer' : 'default' }}
+                style={{ cursor: onRowClicked ? 'pointer' : 'default' }}
               >
                 {row.getVisibleCells().map((cell) => (
                   <Table.Td key={cell.id}>

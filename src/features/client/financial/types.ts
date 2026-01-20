@@ -21,7 +21,7 @@ export interface FinancialTitle {
   issueDate: string;
   dueDate: string;
   status: TitleStatus;
-  paymentMethod?: string;
+  paymentMethod: { name: string };
   movements?: FinancialMovement[];
 }
 

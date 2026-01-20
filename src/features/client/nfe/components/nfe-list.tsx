@@ -15,7 +15,7 @@ import { getNfeInbox, ignoreNfeInboxItem, processNfeInboxItem, completeInboxImpo
 import { DataGrid } from '@/components/ui/data-grid/data-grid';
 import { ColumnDef } from '@tanstack/react-table';
 import dayjs from 'dayjs';
-import { NfeImportModal } from '../../stock/components/modals/nfe-import-modal';
+import { NfeImportModal } from './nfe-import-modal';
 import { NfeInboxItem } from '../types';
 
 
